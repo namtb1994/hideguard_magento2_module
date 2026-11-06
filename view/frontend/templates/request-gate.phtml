@@ -1,0 +1,15 @@
+<?php
+/** @var \Hachitechs\Hideguard\Block\RequestGate $block */
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+$config = $block->getRequestConfig();
+$script = 'window.HachitechsHideguardRequestConfig = ' . json_encode(
+    $config,
+    JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+) . ';';
+?>
+<?php if ($config): ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $script, false) ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', [
+        'src' => $block->getViewFileUrl('Hachitechs_Hideguard::js/request-gate.js'),
+    ], '', false) ?>
+<?php endif; ?>

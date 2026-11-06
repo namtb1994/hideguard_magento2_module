@@ -1,0 +1,1173 @@
+{
+  "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAMf00fpI5OFRJO1KAIOKk4nDSbSxQ06z1HoG6C6uvaKU=\n-----END PUBLIC KEY-----\n",
+  "cases": [
+    {
+      "name": "development-allow",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "development",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=XzpS4ab0Pzix6qK6n4zrN1uqPfgWmRcw8aHMUVcdi6uz580_p7t6zAWgpxjBqxxLV8Qz2BrfebjVR77WBIfgBw"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "development"
+    },
+    {
+      "name": "development-challenge",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "development",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "challenge",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=E_cL4K_XECxQwOkjnJ22J7nkCHc86CT_HtMuyryzaJK1yy20pz25Hq4wdEUOUcf-DzUGC3HYTcmgCjsVnDQFDg"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "development"
+    },
+    {
+      "name": "development-block",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "development",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "block",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=qgm5vKct1GEvD2_4Ti3Y0CYImWPdUaAyJIHCjxkZ62xLzGbbN43JB5DfYW23KolsQCIn9R6SfD6mgGd6tqI_AQ"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "development"
+    },
+    {
+      "name": "staging-allow",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "staging",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=5MiCku8VvajU4JqpdJWF7MkCzXecJV9_lnR4jm4nBgL31ULEAit4CIeAqAzyFaiE1xhGv4I4T5Hm__lDqN1AAA"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "staging"
+    },
+    {
+      "name": "staging-challenge",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "staging",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "challenge",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=iq7U76aiOlsgCOr9GWaUWqHdY_PzcrE0BkRv5o_sZ2C76-Nibweuzf-ZZ8OIhjL83YwoORsfkdrXW3OgEOZOAg"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "staging"
+    },
+    {
+      "name": "staging-block",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "staging",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "block",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=H_qaQTgi8lpdARc_I2TqM2qc-tzPR_FUOC1ilNWtr3NRJ8ZdQt5aKuxJkTwM2Oyhhf96auQwfDxc1dgfjUS2Cg"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "staging"
+    },
+    {
+      "name": "production-allow",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "production"
+    },
+    {
+      "name": "production-challenge",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "challenge",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=4G39ytSU2GmgNt0UqCGqpW-Yjbcm5fg9gvvkysCFNiKiYTZvz1au7C4TzNlkPNm-Koal9eUOn-ySpf9AdePbAw"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "production"
+    },
+    {
+      "name": "production-block",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "block",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yQ5WRJNE1i-ERDCO5LPW2g9ZOuLDhr-2k3QHCVop-B20Xsy4ncYxrQRY_MLk3Fs3duR4QqonXSDrLHH-YxfUCg"
+      },
+      "accepted": true,
+      "now": 1700000000,
+      "environment": "production"
+    },
+    {
+      "name": "max-safe-integer",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 9007199254740991,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=CnHG6dc0pwLyMIaOLcEDmO6TbwNgi864pM7pHdtNYqJxW1C4UopKEdJBvHa5RnM1bSXMxg9ZTOF1hCO01eP9AA"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "unicode-unsigned-detail",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason",
+            "detail": "Tiếng Việt 日本語 😀"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "empty-reasons",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=4AD1E5osr81xzw8OU7HMyx1gYisRE52wV2L9Q2lR5ugMwUTKpX38gWPn3XRETsAEIDcBBPTF0U3VoAV9-YFoBQ"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "64-reasons",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "reason-0"
+          },
+          {
+            "code": "reason-1"
+          },
+          {
+            "code": "reason-2"
+          },
+          {
+            "code": "reason-3"
+          },
+          {
+            "code": "reason-4"
+          },
+          {
+            "code": "reason-5"
+          },
+          {
+            "code": "reason-6"
+          },
+          {
+            "code": "reason-7"
+          },
+          {
+            "code": "reason-8"
+          },
+          {
+            "code": "reason-9"
+          },
+          {
+            "code": "reason-10"
+          },
+          {
+            "code": "reason-11"
+          },
+          {
+            "code": "reason-12"
+          },
+          {
+            "code": "reason-13"
+          },
+          {
+            "code": "reason-14"
+          },
+          {
+            "code": "reason-15"
+          },
+          {
+            "code": "reason-16"
+          },
+          {
+            "code": "reason-17"
+          },
+          {
+            "code": "reason-18"
+          },
+          {
+            "code": "reason-19"
+          },
+          {
+            "code": "reason-20"
+          },
+          {
+            "code": "reason-21"
+          },
+          {
+            "code": "reason-22"
+          },
+          {
+            "code": "reason-23"
+          },
+          {
+            "code": "reason-24"
+          },
+          {
+            "code": "reason-25"
+          },
+          {
+            "code": "reason-26"
+          },
+          {
+            "code": "reason-27"
+          },
+          {
+            "code": "reason-28"
+          },
+          {
+            "code": "reason-29"
+          },
+          {
+            "code": "reason-30"
+          },
+          {
+            "code": "reason-31"
+          },
+          {
+            "code": "reason-32"
+          },
+          {
+            "code": "reason-33"
+          },
+          {
+            "code": "reason-34"
+          },
+          {
+            "code": "reason-35"
+          },
+          {
+            "code": "reason-36"
+          },
+          {
+            "code": "reason-37"
+          },
+          {
+            "code": "reason-38"
+          },
+          {
+            "code": "reason-39"
+          },
+          {
+            "code": "reason-40"
+          },
+          {
+            "code": "reason-41"
+          },
+          {
+            "code": "reason-42"
+          },
+          {
+            "code": "reason-43"
+          },
+          {
+            "code": "reason-44"
+          },
+          {
+            "code": "reason-45"
+          },
+          {
+            "code": "reason-46"
+          },
+          {
+            "code": "reason-47"
+          },
+          {
+            "code": "reason-48"
+          },
+          {
+            "code": "reason-49"
+          },
+          {
+            "code": "reason-50"
+          },
+          {
+            "code": "reason-51"
+          },
+          {
+            "code": "reason-52"
+          },
+          {
+            "code": "reason-53"
+          },
+          {
+            "code": "reason-54"
+          },
+          {
+            "code": "reason-55"
+          },
+          {
+            "code": "reason-56"
+          },
+          {
+            "code": "reason-57"
+          },
+          {
+            "code": "reason-58"
+          },
+          {
+            "code": "reason-59"
+          },
+          {
+            "code": "reason-60"
+          },
+          {
+            "code": "reason-61"
+          },
+          {
+            "code": "reason-62"
+          },
+          {
+            "code": "reason-63"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=ZgW4TOZVibfTYn4lm_wlFl4aVXLEWoI1TFLd87NAM01f0LHi-z2Ne8ezkIvc81i4Ep0S0FzicleL3V-UyrphCg"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "max-token-length",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=C9BHpaRtlNq26ba6XAmi_NPTQmBxRCdYjO0f8QIvLh8zvjtW6o3Q4j7AuA_GwmmD611SYPZvbSSVt2oeCzY1BQ"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "age-299",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1699999701,sig=u2wI_2WNt8_XMC3Iw61nt70ttrZT63xmM_xIEVjQOXz8rV3w1DOIXqgasgasVtYbWHOSxcbrFl-a4rSbJ1JACQ"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "age-300",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1699999700,sig=udIokR0bcxUT3V1u402UrUpLJHR3CmDsojNRK32YGvNlFbOikYZ2jN1axtFN2F06Xa7Zsgn0__BWNarP_0DLBw"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "future-30",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000030,sig=HawGLYwzTXv-RYwPHDgBq3R7f30HJz7uNlHFA4BV2bDJdzh_1vD9st6fhjLET3-gT5yYWAbK3A_fzsO-6pEbBw"
+      },
+      "accepted": true,
+      "now": 1700000000
+    },
+    {
+      "name": "future-31",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000031,sig=ivmLBWk0HVNIz9dwCPPJfBb8u5f6Pt8SGp65QEDBRf8AzE0RKbG36YuHxqmWtvLhuTWbvzcIcbr0vao4cAD-DA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "tampered-score",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 1,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "tampered-visitor",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "other",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "tampered-site",
+      "payload": {
+        "siteId": "other",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "wrong-environment",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "staging",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "unknown-verdict",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "unknown",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "negative-score",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": -1,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "float-score",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0.5,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "string-score",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": "0",
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "unsafe-integer",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 9007199254740992,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "null-reason",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          null
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "unicode-reason-code",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "lỗi"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "65-reasons",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          },
+          {
+            "code": "reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "oversized-token",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "empty-visitor",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "reason-control",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "bad\ncode"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "unicode-site",
+      "payload": {
+        "siteId": "cửa-hàng",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "missing-signature",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": null
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "reason-order-tampered",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "b"
+          },
+          {
+            "code": "a"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=243CGOqjVNMVPNq45veeMgn551wDSordsRIb_rntFuBFBT_VPIz00bT5grUOI3gQCwNHF_dFd5aJPGz2DoyGDA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "wrong-version",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=1,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "wrong-algorithm",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=rsa,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "padded-base64",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA="
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "signature-bit-flip",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=!rUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000
+    },
+    {
+      "name": "wrong-public-key",
+      "payload": {
+        "siteId": "fixture-site",
+        "environment": "production",
+        "requestId": "request:1",
+        "visitorId": "visitor:1",
+        "verdict": "allow",
+        "score": 0,
+        "reasons": [
+          {
+            "code": "fixture-reason"
+          }
+        ],
+        "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
+      },
+      "accepted": false,
+      "now": 1700000000,
+      "publicKey": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEARHRkytSs+C7s97jBVF2PPNrbEX2OC+3cOQuZpxr/Xt8=\n-----END PUBLIC KEY-----\n"
+    }
+  ]
+}

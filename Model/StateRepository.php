@@ -1,0 +1,297 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Hachitechs\Hideguard\Model;
+
+use Hachitechs\HideguardPhp\Access\BrowserState;
+use Hachitechs\HideguardPhp\Access\RateWindow;
+use Hachitechs\HideguardPhp\Access\ResourceRef;
+use Hachitechs\HideguardPhp\Contracts\StorageContract;
+use Magento\Framework\App\ResourceConnection;
+
+/** Persistence mapping for the existing Magento tables; policy lives in Guard. */
+class StateRepository implements StorageContract
+{
+    /**
+     * Initialize platform dependencies.
+     *
+     * @param ResourceConnection $resource
+     */
+    public function __construct(private readonly ResourceConnection $resource)
+    {
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function session(string $scopeId, string $browserId): ?BrowserState
+    {
+        $db = $this->resource->getConnection();
+        return $this->state($db->fetchRow($db->select()->from($this->table('session'))
+            ->where('store_id = ?', $this->storeId($scopeId))->where('session_hash = ?', $browserId)) ?: []);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function saveSession(string $scopeId, BrowserState $state): void
+    {
+        $quoteId = $state->resource === null ? null : $this->quoteId($state->resource);
+        $this->resource->getConnection()->insertOnDuplicate($this->table('session'), [
+            'store_id' => $this->storeId($scopeId), 'session_hash' => $state->browserId,
+            'customer_id' => $state->actorId === null ? 0 : (int)$state->actorId,
+            'visitor_id' => $state->visitorId, 'granted_until' => $state->grantedUntil,
+            'blocked_until' => $state->blockedUntil, 'policy_hash' => $state->policyHash,
+            'quote_id' => $quoteId,
+            'last_seen' => $state->lastSeen, 'verification' => $state->verification,
+            'verification_id' => $state->verificationId, 'verification_until' => $state->verificationUntil,
+        ]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function sessionCount(string $scopeId): int
+    {
+        $db = $this->resource->getConnection();
+        return (int)$db->fetchOne($db->select()->from($this->table('session'), ['count' => 'COUNT(*)'])
+            ->where('store_id = ?', $this->storeId($scopeId)));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function blockExpiry(string $scopeId, ?string $visitorId, ?string $actorId): int
+    {
+        $identities = $this->identities($visitorId, $actorId);
+        if ($identities === []) {
+            return 0;
+        }
+        $db = $this->resource->getConnection();
+        return (int)$db->fetchOne($db->select()->from($this->table('block'), ['expiry' => 'MAX(blocked_until)'])
+            ->where('store_id = ?', $this->storeId($scopeId))->where('identity_hash IN (?)', $identities));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function block(string $scopeId, string $visitorId, ?string $actorId, int $until): void
+    {
+        foreach ($this->identities($visitorId, $actorId) as $identity) {
+            $this->resource->getConnection()->insertOnDuplicate($this->table('block'), [
+                'identity_hash' => $identity, 'store_id' => $this->storeId($scopeId), 'blocked_until' => $until,
+            ]);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function revokeIdentity(string $scopeId, ?string $visitorId, ?string $actorId): void
+    {
+        $db = $this->resource->getConnection();
+        $conditions = [];
+        if ($visitorId !== null) {
+            $conditions[] = $db->quoteInto('visitor_id = ?', $visitorId);
+        }
+        if ($actorId !== null) {
+            $conditions[] = $db->quoteInto('customer_id = ?', $actorId);
+        }
+        if ($conditions !== []) {
+            $this->revoke(['store_id = ?' => $this->storeId($scopeId), '(' . implode(' OR ', $conditions) . ')']);
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bindResource(string $scopeId, string $browserId, ResourceRef $resource): void
+    {
+        $storeId = $this->storeId($scopeId);
+        $quoteId = $this->quoteId($resource);
+        $db = $this->resource->getConnection();
+        $db->update($this->table('session'), ['quote_id' => null], [
+            'store_id = ?' => $storeId, 'quote_id = ?' => $quoteId, 'session_hash <> ?' => $browserId,
+        ]);
+        $db->update($this->table('session'), ['quote_id' => $quoteId], [
+            'store_id = ?' => $storeId, 'session_hash = ?' => $browserId,
+        ]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function resource(string $scopeId, ResourceRef $resource): ?BrowserState
+    {
+        $db = $this->resource->getConnection();
+        return $this->state($db->fetchRow($db->select()->from($this->table('session'))
+            ->where('store_id = ?', $this->storeId($scopeId))->where('quote_id = ?', $this->quoteId($resource))
+            ->limit(1)) ?: []);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function revokeResource(string $scopeId, ResourceRef $resource): void
+    {
+        $this->revoke(['store_id = ?' => $this->storeId($scopeId), 'quote_id = ?' => $this->quoteId($resource)]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function revokeScope(string $scopeId): void
+    {
+        $this->revoke(['store_id = ?' => $this->storeId($scopeId)]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function resetBlocks(string $scopeId): int
+    {
+        $db = $this->resource->getConnection();
+        $storeId = $this->storeId($scopeId);
+        $count = $db->delete($this->table('block'), ['store_id = ?' => $storeId]);
+        $db->update($this->table('session'), ['blocked_until' => 0], ['store_id = ?' => $storeId]);
+        return $count;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rate(string $scopeId, string $bucketHash): ?RateWindow
+    {
+        $db = $this->resource->getConnection();
+        $row = $db->fetchRow($db->select()->from($this->table('rate'))
+            ->where('store_id = ?', $this->storeId($scopeId))->where('bucket_hash = ?', $bucketHash));
+        return $row ? new RateWindow((int)$row['requests'], (int)$row['expires_at']) : null;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function saveRate(string $scopeId, string $bucketHash, RateWindow $window): void
+    {
+        $this->resource->getConnection()->insertOnDuplicate($this->table('rate'), [
+            'store_id' => $this->storeId($scopeId), 'bucket_hash' => $bucketHash,
+            'requests' => $window->requests, 'expires_at' => $window->expiresAt,
+        ]);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function cleanup(string $scopeId, int $now, int $inactiveBefore): void
+    {
+        $db = $this->resource->getConnection();
+        $storeId = $this->storeId($scopeId);
+        $db->delete($this->table('block'), ['store_id = ?' => $storeId, 'blocked_until <= ?' => $now]);
+        $db->delete($this->table('rate'), ['store_id = ?' => $storeId, 'expires_at <= ?' => $now]);
+        $db->delete($this->table('session'), [
+            'store_id = ?' => $storeId, 'last_seen < ?' => $inactiveBefore,
+            'blocked_until <= ?' => $now, 'granted_until <= ?' => $now,
+        ]);
+    }
+
+    /**
+     * Hydrate a detached core state from a Magento row.
+     *
+     * @param array<string,mixed> $row
+     * @return ?BrowserState
+     */
+    private function state(array $row): ?BrowserState
+    {
+        if ($row === []) {
+            return null;
+        }
+        $actorId = (int)$row['customer_id'] > 0 ? (string)$row['customer_id'] : null;
+        return new BrowserState(
+            (string)$row['session_hash'],
+            $actorId,
+            $row['visitor_id'],
+            (int)$row['blocked_until'],
+            (int)$row['granted_until'],
+            $row['policy_hash'],
+            $row['quote_id'] ? new ResourceRef('quote', (string)$row['quote_id'], $actorId) : null,
+            (int)$row['last_seen'],
+            (string)$row['verification'],
+            $row['verification_id'],
+            (int)$row['verification_until']
+        );
+    }
+
+    /**
+     * Clear grants and quote bindings matching native conditions.
+     *
+     * @param array<int|string,mixed> $where
+     * @return void
+     */
+    private function revoke(array $where): void
+    {
+        $this->resource->getConnection()->update(
+            $this->table('session'),
+            ['granted_until' => 0, 'quote_id' => null, 'verification_id' => null, 'verification_until' => 0],
+            $where
+        );
+    }
+
+    /**
+     * Preserve legacy visitor and customer hashes during cutover.
+     *
+     * @param ?string $visitorId
+     * @param ?string $actorId
+     * @return array<string,mixed>
+     */
+    private function identities(?string $visitorId, ?string $actorId): array
+    {
+        $identities = [];
+        if ($visitorId !== null) {
+            $identities[] = hash('sha256', 'visitor:' . $visitorId);
+        }
+        if ($actorId !== null) {
+            $identities[] = hash('sha256', 'customer:' . $actorId);
+        }
+        return $identities;
+    }
+
+    /**
+     * Validate a Magento storefront scope.
+     *
+     * @param string $scopeId
+     * @return int
+     */
+    private function storeId(string $scopeId): int
+    {
+        if (!ctype_digit($scopeId) || (int)$scopeId < 1 || (int)$scopeId > 65535) {
+            throw new \InvalidArgumentException('Magento storage requires a storefront store ID.');
+        }
+        return (int)$scopeId;
+    }
+
+    /**
+     * Validate the quote resource supported by this adapter.
+     *
+     * @param ResourceRef $resource
+     * @return int
+     */
+    private function quoteId(ResourceRef $resource): int
+    {
+        if ($resource->type !== 'quote' || !ctype_digit($resource->id) || (int)$resource->id < 1) {
+            throw new \InvalidArgumentException('Magento storage supports persisted quotes only.');
+        }
+        return (int)$resource->id;
+    }
+
+    /**
+     * Resolve the existing table name and configured prefix.
+     *
+     * @param string $suffix
+     * @return string
+     */
+    private function table(string $suffix): string
+    {
+        return $this->resource->getTableName('hachitech_antidetect_' . $suffix);
+    }
+}

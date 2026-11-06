@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="require.js" template="Hachitechs_Hideguard::require-js.phtml">
+            <block class="Hachitechs\Hideguard\Block\RequestGate"
+                   name="hachitechs.hideguard.request_gate" as="hideguard_request_gate"
+                   template="Hachitechs_Hideguard::request-gate.phtml"/>
+        </referenceBlock>
+        <referenceContainer name="after.body.start">
+            <block class="Hachitechs\Hideguard\Block\Bootstrap"
+                   name="hachitech.antidetect.bootstrap"
+                   template="Hachitechs_Hideguard::bootstrap.phtml"
+                   before="-"/>
+        </referenceContainer>
+    </body>
+</page>

@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="hachitech_antidetect_session" resource="default" engine="innodb" comment="Antidetect Browser Sessions">
+        <column xsi:type="varchar" name="session_hash" length="64" nullable="false" comment="Server Session Hash"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
+        <column xsi:type="varchar" name="visitor_id" length="128" nullable="true" comment="HideGuard Visitor"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="false" default="0" comment="Verified Customer ID"/>
+        <column xsi:type="int" name="quote_id" unsigned="true" nullable="true" comment="Verified Quote ID"/>
+        <column xsi:type="int" name="blocked_until" unsigned="true" nullable="false" default="0" comment="Block Expiry"/>
+        <column xsi:type="int" name="granted_until" unsigned="true" nullable="false" default="0" comment="Grant Expiry"/>
+        <column xsi:type="varchar" name="policy_hash" length="64" nullable="true" comment="Settings Fingerprint"/>
+        <column xsi:type="varchar" name="verification" length="32" nullable="false" default="" comment="Verdict Verification"/>
+        <column xsi:type="varchar" name="verification_id" length="32" nullable="true" comment="Current Verification Attempt"/>
+        <column xsi:type="int" name="verification_until" unsigned="true" nullable="false" default="0" comment="Verification Deadline"/>
+        <column xsi:type="int" name="last_seen" unsigned="true" nullable="false" comment="Last Activity"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="session_hash"/>
+            <column name="store_id"/>
+        </constraint>
+        <index referenceId="HACHITECH_AB_QUOTE" indexType="btree">
+            <column name="quote_id"/>
+            <column name="store_id"/>
+        </index>
+        <index referenceId="HACHITECH_AB_VISITOR" indexType="btree">
+            <column name="store_id"/>
+            <column name="visitor_id"/>
+        </index>
+        <index referenceId="HACHITECH_AB_CUSTOMER" indexType="btree">
+            <column name="store_id"/>
+            <column name="customer_id"/>
+        </index>
+        <index referenceId="HACHITECH_AB_LAST_SEEN" indexType="btree">
+            <column name="last_seen"/>
+        </index>
+    </table>
+    <table name="hachitech_antidetect_block" resource="default" engine="innodb" comment="Antidetect Timed Blocks">
+        <column xsi:type="varchar" name="identity_hash" length="64" nullable="false" comment="Visitor or Customer Hash"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
+        <column xsi:type="int" name="blocked_until" unsigned="true" nullable="false" comment="Block Expiry"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="identity_hash"/>
+            <column name="store_id"/>
+        </constraint>
+        <index referenceId="HACHITECH_AB_BLOCK_EXPIRY" indexType="btree">
+            <column name="blocked_until"/>
+        </index>
+    </table>
+    <table name="hachitech_antidetect_rate" resource="default" engine="innodb" comment="Antidetect Request Windows">
+        <column xsi:type="varchar" name="bucket_hash" length="64" nullable="false" comment="Rate Bucket"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
+        <column xsi:type="int" name="requests" unsigned="true" nullable="false" default="0" comment="Request Count"/>
+        <column xsi:type="int" name="expires_at" unsigned="true" nullable="false" comment="Window Expiry"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="bucket_hash"/>
+            <column name="store_id"/>
+        </constraint>
+        <index referenceId="HACHITECH_AB_RATE_EXPIRY" indexType="btree">
+            <column name="expires_at"/>
+        </index>
+    </table>
+</schema>

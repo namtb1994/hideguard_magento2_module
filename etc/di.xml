@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Csp\Model\CompositePolicyCollector">
+        <arguments>
+            <argument name="collectors" xsi:type="array">
+                <item name="hachitech_antidetect" xsi:type="object" sortOrder="10">Hachitechs\Hideguard\Model\CspCollector</item>
+            </argument>
+        </arguments>
+    </type>
+    <!-- Protection commits must survive a rollback of the surrounding checkout transaction. -->
+    <virtualType name="HachitechsHideguardResource" type="Magento\Framework\App\ResourceConnection"/>
+    <type name="Hachitechs\Hideguard\Model\StateRepository">
+        <arguments>
+            <argument name="resource" xsi:type="object">HachitechsHideguardResource</argument>
+        </arguments>
+    </type>
+    <type name="Hachitechs\Hideguard\Model\StoreLock">
+        <arguments>
+            <argument name="resource" xsi:type="object">HachitechsHideguardResource</argument>
+        </arguments>
+    </type>
+    <virtualType name="HachitechsHideguardGuard" type="Hachitechs\HideguardPhp\Guard">
+        <arguments>
+            <argument name="storage" xsi:type="object">Hachitechs\Hideguard\Model\StateRepository</argument>
+            <argument name="atomic" xsi:type="object">Hachitechs\Hideguard\Model\StoreLock</argument>
+            <argument name="verifier" xsi:type="object">Hachitechs\HideguardPhp\Verification\Ed25519Verifier</argument>
+            <argument name="clock" xsi:type="object">Hachitechs\HideguardPhp\Support\SystemClock</argument>
+        </arguments>
+    </virtualType>
+    <type name="Hachitechs\HideguardPhp\Verification\Ed25519Verifier">
+        <arguments>
+            <argument name="clock" xsi:type="object">Hachitechs\HideguardPhp\Support\SystemClock</argument>
+        </arguments>
+    </type>
+    <type name="Hachitechs\Hideguard\Model\Access">
+        <arguments>
+            <argument name="guard" xsi:type="object">HachitechsHideguardGuard</argument>
+        </arguments>
+    </type>
+    <type name="Hachitechs\Hideguard\Model\ActionVerdict">
+        <arguments>
+            <argument name="guard" xsi:type="object">HachitechsHideguardApiGuard</argument>
+        </arguments>
+    </type>
+    <virtualType name="HachitechsHideguardApiGuard" type="Hachitechs\HideguardPhp\Guard">
+        <arguments>
+            <argument name="storage" xsi:type="object">Hachitechs\Hideguard\Model\StateRepository</argument>
+            <argument name="atomic" xsi:type="object">Hachitechs\Hideguard\Model\StoreLock</argument>
+            <argument name="verifier" xsi:type="object">Hachitechs\Hideguard\Model\ApiVerdictVerifier</argument>
+            <argument name="clock" xsi:type="object">Hachitechs\HideguardPhp\Support\SystemClock</argument>
+        </arguments>
+    </virtualType>
+    <type name="Hachitechs\HideguardPhp\Verification\PrivateVerdictChecker">
+        <arguments>
+            <argument name="clock" xsi:type="object">Hachitechs\HideguardPhp\Support\SystemClock</argument>
+        </arguments>
+    </type>
+    <!-- Virtual types include non-Magento Composer classes in compiled constructor metadata. -->
+    <type name="Hachitechs\HideguardPhp\VerdictClientFactory">
+        <arguments>
+            <argument name="instanceName" xsi:type="string">HachitechsHideguardVerdictClient</argument>
+        </arguments>
+    </type>
+    <virtualType name="HachitechsHideguardVerdictClient" type="Hachitechs\HideguardPhp\VerdictClient">
+        <arguments>
+            <argument name="transport" xsi:type="object">HachitechsHideguardHttpTransport</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="HachitechsHideguardHttpTransport" type="Hachitechs\HideguardPhp\Http\CurlTransport">
+        <arguments>
+            <argument name="timeoutSeconds" xsi:type="number">8</argument>
+            <argument name="connectTimeoutSeconds" xsi:type="number">3</argument>
+        </arguments>
+    </virtualType>
+    <type name="Hachitechs\Hideguard\Model\DebugTransport">
+        <arguments>
+            <argument name="transport" xsi:type="object">HachitechsHideguardHttpTransport</argument>
+            <argument name="logger" xsi:type="object">HachitechsHideguardDebugLogger</argument>
+        </arguments>
+    </type>
+    <virtualType name="HachitechsHideguardDebugLogger" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="name" xsi:type="string">hideguard</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="debug" xsi:type="object">HachitechsHideguardDebugHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="HachitechsHideguardDebugHandler" type="Magento\Framework\Logger\Handler\Base">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/hachitechs_hideguard_debug.log</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Config\Model\Config\TypePool">
+        <arguments>
+            <argument name="sensitive" xsi:type="array">
+                <item name="hachitech_antidetectbrowser/development/api_key" xsi:type="string">1</item>
+                <item name="hachitech_antidetectbrowser/staging/api_key" xsi:type="string">1</item>
+                <item name="hachitech_antidetectbrowser/production/api_key" xsi:type="string">1</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\App\FrontControllerInterface">
+        <plugin name="hachitech_antidetect_action_response" type="Hachitechs\Hideguard\Plugin\ActionResponse" sortOrder="-200"/>
+    </type>
+    <type name="Magento\Customer\Api\AccountManagementInterface">
+        <plugin name="hachitechs_hideguard_account" type="Hachitechs\Hideguard\Plugin\AuthAccess" sortOrder="10"/>
+    </type>
+    <type name="Magento\Integration\Api\CustomerTokenServiceInterface">
+        <plugin name="hachitechs_hideguard_token" type="Hachitechs\Hideguard\Plugin\AuthAccess" sortOrder="10"/>
+    </type>
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="hachitech_antidetect_cart" type="Hachitechs\Hideguard\Plugin\QuoteAccess" sortOrder="10"/>
+    </type>
+    <type name="Magento\Quote\Model\QuoteManagement">
+        <plugin name="hachitech_antidetect_order" type="Hachitechs\Hideguard\Plugin\OrderAccess" sortOrder="10"/>
+    </type>
+    <type name="Magento\Config\Model\Config">
+        <plugin name="hachitech_antidetect_settings" type="Hachitechs\Hideguard\Plugin\ValidateSettings" sortOrder="10"/>
+    </type>
+    <type name="Magento\PageCache\Model\VclGeneratorInterface">
+        <plugin name="hachitech_antidetect_varnish_pass" type="Hachitechs\Hideguard\Plugin\VarnishAccess"/>
+    </type>
+</config>

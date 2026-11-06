@@ -1,0 +1,19 @@
+<?php
+/** @var \Hachitechs\Hideguard\Block\Bootstrap $block */
+$config = $block->getBrowserConfig();
+?>
+<?php if ($config['enabled']): ?>
+    <?php if ($config['pageProtected'] || $config['page'] === 'gate'): ?>
+        <?php
+        $block->setData('initial_state', $config['initialState']);
+        $block->setData('gate_page', $config['page'] === 'gate');
+        ?>
+        <?= /* @noEscape */ $block->fetchView($block->getTemplateFile('Hachitechs_Hideguard::gate.phtml')) ?>
+    <?php endif; ?>
+    <script type="text/x-magento-init">
+        <?= /* @noEscape */ json_encode(
+            ['*' => ['Hachitechs_Hideguard/js/access' => $config]],
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+        ) ?>
+    </script>
+<?php endif; ?>

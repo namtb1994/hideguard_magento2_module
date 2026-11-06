@@ -1,0 +1,11 @@
+<?php
+/** @var \Hachitechs\Hideguard\Block\Adminhtml\System\Config\ResetBlocks $block */
+/** @var \Magento\Framework\Escaper $escaper */
+?>
+<button type="button" class="action-default"
+        data-mage-init='<?= $escaper->escapeHtmlAttr(json_encode([
+            'Hachitechs_Hideguard/js/reset-blocks' => $block->getResetConfig(),
+        ])) ?>'>
+    <span><?= $escaper->escapeHtml(__('Reset block list')) ?></span>
+</button>
+<span class="hachitech-ab-reset-status" role="status" aria-live="polite"></span>

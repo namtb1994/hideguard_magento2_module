@@ -1,0 +1,5 @@
+<?php
+/** @var \Magento\Framework\View\Element\Template $block */
+?>
+<?= $block->getChildHtml('hideguard_request_gate') ?>
+<?= /* @noEscape */ $block->fetchView($block->getTemplateFile('Magento_Theme::page/js/require_js.phtml')) ?>

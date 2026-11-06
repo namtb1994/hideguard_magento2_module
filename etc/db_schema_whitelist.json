@@ -1,0 +1,54 @@
+{
+    "hachitech_antidetect_session": {
+        "column": {
+            "session_hash": true,
+            "store_id": true,
+            "visitor_id": true,
+            "customer_id": true,
+            "quote_id": true,
+            "blocked_until": true,
+            "granted_until": true,
+            "policy_hash": true,
+            "last_seen": true,
+            "verification": true,
+            "verification_id": true,
+            "verification_until": true
+        },
+        "index": {
+            "HACHITECH_AB_QUOTE": true,
+            "HACHITECH_AB_VISITOR": true,
+            "HACHITECH_AB_CUSTOMER": true,
+            "HACHITECH_AB_LAST_SEEN": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "hachitech_antidetect_block": {
+        "column": {
+            "identity_hash": true,
+            "store_id": true,
+            "blocked_until": true
+        },
+        "index": {
+            "HACHITECH_AB_BLOCK_EXPIRY": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "hachitech_antidetect_rate": {
+        "column": {
+            "bucket_hash": true,
+            "store_id": true,
+            "requests": true,
+            "expires_at": true
+        },
+        "index": {
+            "HACHITECH_AB_RATE_EXPIRY": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    }
+}
