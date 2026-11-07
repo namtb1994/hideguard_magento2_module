@@ -37,6 +37,7 @@ class RequestGate extends Template
         $store = $this->_storeManager->getStore();
         $storeId = (int)$store->getId();
         if (!$this->config->settings($storeId)['enabled']
+            || $this->rules->isCheckoutSuccess((string)$this->getRequest()->getPathInfo())
             || !$this->rules->protects((string)$this->getRequest()->getPathInfo(), $storeId)
         ) {
             return [];

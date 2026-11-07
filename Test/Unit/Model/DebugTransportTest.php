@@ -18,6 +18,41 @@ class DebugTransportTest extends TestCase
     private const BODY = '{"visitorId":"private-visitor"}';
     private const HEADERS = ['x-api-key' => 'private-api-key'];
 
+    public function testCopyTruncateKeepsAnOpenLoggerWriting(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'hideguard-log-');
+        $archive = $file . '.1';
+        $handler = new \Monolog\Handler\StreamHandler($file, \Monolog\Logger::DEBUG);
+        $logger = new \Monolog\Logger('fixture', [$handler]);
+        $transport = $this->createMock(HttpTransport::class);
+        $response = new HttpResponse(200, '{"verdict":"allow","visitorId":"private-visitor"}');
+        $transport->expects(self::exactly(2))->method('post')->willReturn($response);
+        try {
+            $config = $this->createMock(Config::class);
+            $config->expects(self::exactly(2))->method('debugEnabled')->with(7)->willReturn(true);
+            $subject = new DebugTransport($transport, $config, $logger, 7);
+            self::assertSame($response, $subject->post(self::URL, self::HEADERS, self::BODY));
+            copy($file, $archive);
+            $stream = fopen($file, 'c');
+            ftruncate($stream, 0);
+            fclose($stream);
+            self::assertSame($response, $subject->post(self::URL, self::HEADERS, self::BODY));
+            foreach ([$file, $archive] as $path) {
+                $records = file_get_contents($path);
+                self::assertSame(2, substr_count(trim($records), "\n") + 1);
+                self::assertStringContainsString('HideGuard response', $records);
+                self::assertStringNotContainsString('private-visitor', $records);
+                self::assertStringNotContainsString('private-api-key', $records);
+            }
+        } finally {
+            $handler->close();
+            unlink($file);
+            if (is_file($archive)) {
+                unlink($archive);
+            }
+        }
+    }
+
     public function testDisabledLoggingForwardsTheExactRequestAndResponseWithoutWriting(): void
     {
         $transport = $this->createMock(HttpTransport::class);

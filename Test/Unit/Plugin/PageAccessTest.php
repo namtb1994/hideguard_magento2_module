@@ -42,7 +42,9 @@ class PageAccessTest extends TestCase
         ])->willReturn('https://store.test/antidetectbrowser/gate/index');
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($failure ? self::once() : self::never())->method('error');
-        return new PageAccess($rules, $access, $stores, $response, new \Hachitechs\Hideguard\Model\DeniedResponse($response, $url), $logger);
+        return new PageAccess($rules, $access, $stores, $response,
+            new \Hachitechs\Hideguard\Model\DeniedResponse($response, $url), $logger,
+            $this->createStub(\Magento\Checkout\Model\Session\SuccessValidator::class));
     }
 
     private function request(string $method = 'GET', bool $ajax = false): Request

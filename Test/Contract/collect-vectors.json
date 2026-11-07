@@ -212,7 +212,7 @@
         "reasons": [
           {
             "code": "fixture-reason",
-            "detail": "Tiếng Việt 日本語 😀"
+            "detail": "Unicode 日本語 😀"
           }
         ],
         "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
@@ -737,7 +737,7 @@
         "score": 0,
         "reasons": [
           {
-            "code": "lỗi"
+            "code": "エラー"
           }
         ],
         "signature": "v=2,alg=ed25519,kid=fixture,t=1700000000,sig=yrUqIsLd2YWdrNuUgzrAg8ol1oH4g_iyhhID2D-8o2mdouUKAUSCmLzdSXgpGLuQGnuCDgp9TA4Jyb3zZJkbAA"
@@ -1016,7 +1016,7 @@
     {
       "name": "unicode-site",
       "payload": {
-        "siteId": "cửa-hàng",
+        "siteId": "店舗",
         "environment": "production",
         "requestId": "request:1",
         "visitorId": "visitor:1",

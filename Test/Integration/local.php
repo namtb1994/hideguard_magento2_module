@@ -66,7 +66,7 @@ checkAb($om->get(\Magento\Framework\Module\ModuleListInterface::class)->has('Hac
 checkAb($om->get(\Magento\Framework\ObjectManager\ConfigInterface::class)
     ->getInstanceType('HachitechsHideguardGuard') === Guard::class, 'Fixture must load the current module DI XML');
 $stores = $om->get(\Magento\Store\Model\StoreManagerInterface::class);
-checkAb(in_array(parse_url($stores->getStore()->getBaseUrl(), PHP_URL_HOST), ['troyclancy.local', 'troyclancylocal.com'], true), 'Allowlisted local Magento host required');
+checkAb(in_array(parse_url($stores->getStore()->getBaseUrl(), PHP_URL_HOST), ['troyclancy.local', 'troyclancylocal.com', 'magentotest.com'], true), 'Allowlisted local Magento host required');
 $resource = $om->get('HachitechsHideguardResource');
 $db = $resource->getConnection();
 $schema = simplexml_load_file(dirname(__DIR__, 2) . '/etc/db_schema.xml');
@@ -82,6 +82,7 @@ foreach ($schema->table as $declaration) {
         if (isset($column['default'])) { $options['default'] = (string)$column['default']; }
         $table->addColumn((string)$column['name'], match ($type) {
             'varchar' => Table::TYPE_TEXT, 'smallint' => Table::TYPE_SMALLINT, 'int' => Table::TYPE_INTEGER,
+            'bigint' => Table::TYPE_BIGINT,
         }, $type === 'varchar' ? (int)$column['length'] : null, $options, (string)$column['comment']);
     }
     $primary = [];
@@ -92,7 +93,7 @@ foreach ($schema->table as $declaration) {
     $resource->setMappedTableName((string)$declaration['name'], $name);
 }
 
-$config = new class($om->get(\Magento\Framework\App\Config\ScopeConfigInterface::class), $om->get(\Magento\Framework\Encryption\EncryptorInterface::class)) extends Config {
+$config = new class($om->get(\Magento\Framework\App\Config\ScopeConfigInterface::class), $om->get(\Magento\Framework\Encryption\EncryptorInterface::class), $om->get(\Hachitechs\Hideguard\Model\Config\RuntimeSettings::class)) extends Config {
     public bool $debug = true;
     public array $value = [
         'enabled' => true, 'environment' => 'development', 'points' => ['all_pages', 'complete_order'],
@@ -121,9 +122,9 @@ $signingSecret = sodium_crypto_sign_secretkey($signingPair);
 $signatureKey = "-----BEGIN PUBLIC KEY-----\n" . base64_encode(
     hex2bin('302a300506032b6570032100') . sodium_crypto_sign_publickey($signingPair)
 ) . "\n-----END PUBLIC KEY-----";
-foreach (['development', 'staging', 'production'] as $environment) {
+foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
     $config->value['keys'][$environment]['signaturePublicKey'] = $signatureKey;
-    $config->value['keys'][$environment]['endpointUrl'] = 'https://' . $environment . '.hideguard.example:8443';
+    $config->value['keys'][$environment]['endpointUrl'] = \Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::defaultEndpointUrl($environment);
 }
 $signed = function (string $verdict, string $visitor) use ($signingSecret, $config): array {
     $payload = ['siteId' => 'site_local', 'environment' => $config->value['environment'],
@@ -287,11 +288,12 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     saveAbState($states, $lock, $identity->hash(), $storeId, ['granted_until' => time()]);
     checkAb($access->pageStatus($storeId)['status'] === 'verification_required', 'Expiry is checked on server without cron');
     reportAb($access, $storeId, $signed('allow', 'visitor-a'));
-    $config->value['points'] = ['cart'];
+    $config->value['passDuration'] = 60;
     checkAb($access->pageStatus($storeId)['status'] === 'verification_required', 'Settings fingerprint revokes grants');
+    $config->value['passDuration'] = 0;
 
     $identity->customer = 0;
-    foreach (['development', 'staging', 'production'] as $environment) {
+    foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
         $config->value['environment'] = $environment;
         $identity->browser = 'signed-' . $environment;
         checkAb(reportAb($access, $storeId, $signed('allow', 'signed-' . $environment))['status'] === 'allowed',
@@ -320,7 +322,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $instances[Access::class] = $access;
     $shared->setValue($om, $instances);
 
-    foreach (['development', 'staging', 'production'] as $environment) {
+    foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
         $config->value['environment'] = $environment;
         $policies = $om->get(\Magento\Csp\Api\PolicyCollectorInterface::class)->collect();
         checkAb(in_array('base-uri', array_map(fn($policy) => $policy->getId(), $policies), true),
@@ -330,8 +332,9 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
             $matches = array_values(array_filter($policies, fn($policy) => $policy->getId() === $directive));
             checkAb(count($matches) === 1 && in_array($endpoint, $matches[0]->getHostSources(), true),
                 'Native CSP allows the active ' . $environment . ' HideGuard origin for ' . $directive);
-            checkAb(!in_array('https://hideguard.io', $matches[0]->getHostSources(), true),
-                'Native CSP does not retain the replaced static HideGuard origin');
+            $inactive = $environment === 'production' ? 'https://dev.hideguard.io' : 'https://hideguard.io';
+            checkAb(!in_array($inactive, $matches[0]->getHostSources(), true),
+                'Native CSP does not retain the inactive mode origin');
         }
         $browserConfig = $om->create(\Hachitechs\Hideguard\Block\Bootstrap::class)->getBrowserConfig();
         checkAb($browserConfig['endpointUrl'] === $endpoint, 'Native browser config uses the active environment URL');
@@ -366,7 +369,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $structure = $om->get('adminhtmlConfigStructure');
     $environmentPath = Config::SECTION . '/general/environment';
     $environmentOrder = (int)$structure->getElement($environmentPath)->getData()['sortOrder'];
-    $pointsOrder = (int)$structure->getElement(Config::SECTION . '/general/protected_points')->getData()['sortOrder'];
+    $pointsOrder = (int)$structure->getElement(Config::SECTION . '/general/protected_paths')->getData()['sortOrder'];
     $debugField = $structure->getElement(Config::SECTION . '/general/debug')->getData();
     checkAb(($debugField['type'] ?? null) === 'select'
         && ($debugField['source_model'] ?? null) === \Magento\Config\Model\Config\Source\Yesno::class
@@ -376,16 +379,11 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $scope) {
         checkAb(($debugField[$scope] ?? null) === '1', 'Debug Log supports ' . $scope);
     }
-    foreach (['development', 'staging', 'production'] as $environment) {
+    foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
         $groupPath = Config::SECTION . '/general/' . $environment;
         $group = $structure->getElement($groupPath)->getData();
         $field = $structure->getElement($groupPath . '/signature_public_key')->getData();
-        $urlField = $structure->getElement($groupPath . '/endpoint_url')->getData();
-        checkAb(($urlField['label'] ?? null) === 'HideGuard URL' && ($urlField['type'] ?? null) === 'text'
-            && ($urlField['config_path'] ?? null) === Config::SECTION . '/' . $environment . '/endpoint_url',
-            'Admin HideGuard URL maps to the ' . $environment . ' profile');
-        checkAb((int)$urlField['sortOrder'] < (int)$group['children']['public_key']['sortOrder'],
-            'HideGuard URL appears before the public keys');
+        checkAb(!isset($group['children']['endpoint_url']), 'HideGuard URL is absent from Admin');
         checkAb(($field['type'] ?? null) === 'textarea'
             && ($field['config_path'] ?? null) === Config::SECTION . '/' . $environment . '/signature_public_key',
             'Admin signature field maps to the ' . $environment . ' key');
@@ -395,7 +393,6 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
             'Admin key group appears directly below Environment');
         foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $scope) {
             checkAb(($field[$scope] ?? null) === '1', 'Admin signature key supports ' . $scope);
-            checkAb(($urlField[$scope] ?? null) === '1', 'Admin HideGuard URL supports ' . $scope);
         }
     }
     $urn = $om->get(\Magento\Framework\Config\Dom\UrnResolver::class);

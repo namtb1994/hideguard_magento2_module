@@ -4,6 +4,7 @@ import vm from 'node:vm';
 // Exercise the AMD files shipped by the module, without the core package's development fixtures.
 const runtimeSource = readFileSync(new URL('../../view/frontend/web/js/runtime.js', import.meta.url), 'utf8');
 const adapterSource = readFileSync(new URL('../../view/frontend/web/js/access.js', import.meta.url), 'utf8');
+const placeOrderSource = readFileSync(new URL('../../view/frontend/web/js/place-order.js', import.meta.url), 'utf8');
 
 export function browser({preflight = {status: 'verification_required'}, report, points = ['all_pages'],
   page = 'gate', pageProtected = true, initialState = 'pending', responseCode = 200,
@@ -50,7 +51,7 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   const bodyLockedBeforeInit = document.body.hasAttribute('inert');
   const window = {
     addEventListener: (name, callback) => listeners.set(name, callback),
-    dispatchEvent() {},
+    dispatchEvent(event) { listeners.get(event.type)?.(event); return true; },
     location: {href: 'https://store.test/antidetectbrowser/gate/index',
       reload: () => { reloads++; }, replace: url => redirects.push(url)},
     fetch: async (url, options = {}) => {
@@ -71,7 +72,7 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   const context = vm.createContext({
     window, document, URL, URLSearchParams, AbortController, Promise, Date,
     MutationObserver: class { constructor(callback) { mutations.push(callback); } observe() {} },
-    CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
+    CustomEvent: class { constructor(type, options = {}) { this.type = type; this.detail = options.detail; } },
     setTimeout: (callback, ms) => { timers.push({callback, ms, active: true}); return timers.length; },
     clearTimeout: id => { if (timers[id - 1]) timers[id - 1].active = false; },
     define: (dependencies, factory) => {
@@ -103,6 +104,12 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   return {window, listeners, requests, scripts, gate, heading, message, timers, redirects, document, content,
     lockedBeforeInit, bodyLockedBeforeInit, accessDependencies,
     ajaxStart,
+    placeOrder(service) {
+      let mixin;
+      context.define = (dependencies, factory) => { mixin = factory(); };
+      vm.runInContext(placeOrderSource, context);
+      return mixin(service);
+    },
     ajaxComplete: (url, code, marker, responseJSON) => ajaxStart(url)(code, marker, responseJSON),
     interaction: (type, target = content) => {
       let prevented = false, stopped = false;

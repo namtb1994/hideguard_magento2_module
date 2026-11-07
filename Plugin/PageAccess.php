@@ -7,6 +7,7 @@ namespace Hachitechs\Hideguard\Plugin;
 use Hachitechs\Hideguard\Model\Access;
 use Hachitechs\Hideguard\Model\PageRules;
 use Hachitechs\Hideguard\Model\DeniedResponse;
+use Magento\Checkout\Model\Session\SuccessValidator;
 use Magento\Framework\App\FrontControllerInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Response\Http;
@@ -22,6 +23,7 @@ class PageAccess
      * @param Http $response
      * @param DeniedResponse $deniedResponse
      * @param LoggerInterface $logger
+     * @param SuccessValidator $successValidator
      */
     public function __construct(
         private readonly PageRules $rules,
@@ -29,7 +31,8 @@ class PageAccess
         private readonly StoreManagerInterface $stores,
         private readonly Http $response,
         private readonly DeniedResponse $deniedResponse,
-        private readonly LoggerInterface $logger
+        private readonly LoggerInterface $logger,
+        private readonly SuccessValidator $successValidator
     ) {
     }
 
@@ -47,19 +50,28 @@ class PageAccess
         if (!$this->rules->protects((string)$request->getPathInfo(), $storeId)) {
             return $proceed($request);
         }
+        $successPage = $this->rules->isCheckoutSuccess((string)$request->getPathInfo());
         $state = ['status' => 'error'];
         try {
             // Persist the deadline before sending HTML, even if the browser never runs JavaScript.
-            $state = $request->isGet() && !$request->isXmlHttpRequest()
+            // Success must accept the gate's grant without restarting Always verification.
+            $state = !$successPage && $request->isGet() && !$request->isXmlHttpRequest()
                 ? $this->access->status($storeId) : $this->access->pageStatus($storeId);
         } catch (\Throwable $error) {
             // Storage/session failures must not deliver the protected page or a cached response.
             $this->logger->error('HideGuard page access check failed.', ['exception' => $error]);
         }
-        if ($state['status'] === 'allowed') {
+        if ($state['status'] === 'allowed'
+            || ($successPage && $request->isGet() && !$request->isXmlHttpRequest()
+                && $state['status'] === 'verification_required' && $this->successValidator->isValid())
+        ) {
+            // A successful checkout already passed order validation. Native success consumes this session once.
+            // A real block or verification error must still reach the denial response.
             return $proceed($request);
         }
-        if ($state['status'] === 'verification_required' && $request->isGet() && !$request->isXmlHttpRequest()) {
+        if (!$successPage && $state['status'] === 'verification_required'
+            && $request->isGet() && !$request->isXmlHttpRequest()
+        ) {
             // Render the page beneath the interaction lock while verification is pending.
             $this->response->setHeader('Cache-Control', 'private, no-store, max-age=0', true);
             return $proceed($request);

@@ -7,7 +7,7 @@ namespace Hachitechs\Hideguard\Model;
 use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
-use Hachitechs\Hideguard\Model\Config\Source\Points;
+use Hachitechs\Hideguard\Model\Config\RuntimeSettings;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -15,14 +15,17 @@ use Magento\Store\Model\ScopeInterface;
 class Config
 {
     public const SECTION = 'hachitech_antidetectbrowser';
+    public const ACCESS_POINTS = ['all_pages', 'complete_order'];
 
     /**
      * @param ScopeConfigInterface $scopeConfig
      * @param EncryptorInterface $encryptor
+     * @param RuntimeSettings $runtime
      */
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
-        private readonly EncryptorInterface $encryptor
+        private readonly EncryptorInterface $encryptor,
+        private readonly RuntimeSettings $runtime
     ) {
     }
 
@@ -82,16 +85,19 @@ class Config
         $keys = [];
         foreach (ProtectionPolicy::ENVIRONMENTS as $environment) {
             $keys[$environment] = [
-                'endpointUrl' => trim((string)($read($environment . '/endpoint_url')
-                    ?? ProtectionPolicy::DEFAULT_ENDPOINT_URL)),
+                'endpointUrl' => ProtectionPolicy::defaultEndpointUrl($environment),
                 'publicKey' => trim((string)$read($environment . '/public_key')),
                 'signaturePublicKey' => trim((string)$read($environment . '/signature_public_key')),
             ];
         }
+        $runtimeStoreId = $this->runtime->storeIdForScope($scope, $scopeId);
+        $limits = $this->runtime->limits($runtimeStoreId);
         return [
+            '_runtime_store_id' => $runtimeStoreId,
+            'circuit' => $this->runtime->circuit(),
             'enabled' => (bool)$read('general/enabled'),
             'environment' => (string)($read('general/environment') ?: 'development'),
-            'points' => array_values(array_filter(explode(',', (string)$read('general/protected_points')))),
+            'points' => self::ACCESS_POINTS,
             'pageRules' => $this->normalizePaths((string)$read('general/protected_paths')),
             'blockDuration' => (int)($read('general/block_duration') ?? 3600),
             'passDuration' => filter_var(
@@ -100,6 +106,7 @@ class Config
                 ['options' => ['default' => -1]]
             ),
             'keys' => $keys,
+            'limits' => $limits,
         ];
     }
 
@@ -122,7 +129,14 @@ class Config
      */
     public function normalizePaths(string $value): array
     {
-        return array_values(array_filter(array_map('trim', preg_split('/\R/', $value)), 'strlen'));
+        $lines = preg_split('/\R/', $value);
+        if ($lines === false) {
+            throw new GuardException(FailureReason::InvalidConfiguration, 'Cannot read protected path rules.');
+        }
+        return array_values(array_filter(
+            array_map('trim', $lines),
+            static fn(string $line): bool => strlen($line) > 0
+        ));
     }
 
     /**
@@ -133,8 +147,8 @@ class Config
      */
     public function toPolicy(array $settings): ProtectionPolicy
     {
-        if (array_diff($settings['points'], Points::VALUES)) {
-            throw new GuardException(FailureReason::InvalidConfiguration, 'Invalid Magento access point.');
+        if (!in_array($settings['environment'], ProtectionPolicy::ENVIRONMENTS, true)) {
+            throw new GuardException(FailureReason::InvalidConfiguration, 'Select Testing or Production.');
         }
         $keys = $settings['keys'][$settings['environment']] ?? ['publicKey' => '', 'signaturePublicKey' => ''];
         return new ProtectionPolicy(
@@ -142,11 +156,17 @@ class Config
             environment: $settings['environment'],
             publicKey: $keys['publicKey'],
             signaturePublicKey: $keys['signaturePublicKey'],
-            accessPoints: $settings['points'],
+            accessPoints: self::ACCESS_POINTS,
             pageRules: $settings['pageRules'],
             blockDuration: $settings['blockDuration'],
             passDuration: $settings['passDuration'],
-            endpointUrl: $keys['endpointUrl'] ?? ProtectionPolicy::DEFAULT_ENDPOINT_URL
+            limits: $this->runtime->rateLimits($settings['_runtime_store_id'] ?? null)
         );
+    }
+
+    /** @return array{enabled:bool,policy:\Hachitechs\HideguardPhp\Configuration\CircuitBreakerPolicy} */
+    public function circuitSettings(int $storeId): array
+    {
+        return ['enabled' => RuntimeSettings::CIRCUIT_ENABLED, 'policy' => $this->runtime->circuitPolicy()];
     }
 }

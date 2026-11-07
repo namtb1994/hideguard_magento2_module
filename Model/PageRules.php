@@ -35,6 +35,12 @@ class PageRules
         );
     }
 
+    /** The success controller consumes checkout session state and must only run after verification. */
+    public function isCheckoutSuccess(string $path): bool
+    {
+        return (bool)preg_match('#^checkout/onepage/success(?:/|$)#i', $this->paths->normalize($path));
+    }
+
     /**
      * Match custom paths or Magento access points, resolving SEO URL rewrites.
      *
@@ -57,18 +63,43 @@ class PageRules
         if (array_intersect(['product', 'cart', 'checkout'], $settings['points']) === []) {
             return false;
         }
-        $path = $this->paths->normalize($path);
-        $rewrite = $this->rewrites->findOneByData(['request_path' => $path, 'store_id' => $storeId]);
+        $normalized = $this->paths->normalize($path);
+        $rewrite = $this->rewrites->findOneByData(['request_path' => $normalized, 'store_id' => $storeId]);
         // Magento resolves controller/action classes without regard to case.
         // Keep the original case for custom path rules and URL rewrite lookup.
-        $target = strtolower($rewrite ? $this->paths->normalize($rewrite->getTargetPath()) : $path);
-        return (in_array('product', $settings['points'], true) && str_starts_with($target, 'catalog/product/'))
-            || (in_array('cart', $settings['points'], true)
+        return $this->protectsTarget($rewrite ? $rewrite->getTargetPath() : $path, $settings['points']);
+    }
+
+    /** Same canonical route selection for live requests and the VCL snapshot. */
+    public function protectsTarget(string $target, array $points): bool
+    {
+        $target = strtolower($this->paths->normalize($target));
+        return (in_array('product', $points, true) && str_starts_with($target, 'catalog/product/'))
+            || (in_array('cart', $points, true)
                 && ($target === 'checkout/cart' || str_starts_with($target, 'checkout/cart/')))
-            || (in_array('checkout', $settings['points'], true)
+            || (in_array('checkout', $points, true)
                 && (in_array($target, ['checkout', 'checkout/index', 'onestepcheckout'], true)
                     || str_starts_with($target, 'checkout/index/')
                     || $target === 'checkout/onepage' || str_starts_with($target, 'checkout/onepage/index')
                     || str_starts_with($target, 'onestepcheckout/')));
+    }
+
+    public function nativePatterns(array $points): array
+    {
+        if (in_array('all_pages', $points, true)) {
+            return ['*'];
+        }
+        $patterns = [];
+        if (in_array('product', $points, true)) {
+            $patterns[] = 'catalog/product/*';
+        }
+        if (in_array('cart', $points, true)) {
+            $patterns = [...$patterns, 'checkout/cart', 'checkout/cart/*'];
+        }
+        if (in_array('checkout', $points, true)) {
+            $patterns = [...$patterns, 'checkout', 'checkout/index', 'checkout/index/*', 'checkout/onepage',
+                'checkout/onepage/index*', 'onestepcheckout', 'onestepcheckout/*'];
+        }
+        return $patterns;
     }
 }

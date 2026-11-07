@@ -6,7 +6,6 @@ namespace Hachitechs\Hideguard\Test\Unit\Model;
 
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\Hideguard\Model\Config;
-
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -14,6 +13,16 @@ use PHPUnit\Framework\TestCase;
 
 class ConfigTest extends TestCase
 {
+    private function runtime(): \Hachitechs\Hideguard\Model\Config\RuntimeSettings
+    {
+        $deployment = $this->createStub(\Magento\Framework\App\DeploymentConfig::class);
+        $deployment->method('get')->willReturnCallback(fn($key, $default = null) => $default);
+        return new \Hachitechs\Hideguard\Model\Config\RuntimeSettings(
+            $deployment,
+            $this->createStub(\Magento\Store\Model\StoreManagerInterface::class)
+        );
+    }
+
     /** @dataProvider debugFlags */
     public function testDebugFlagUsesTheRequestedStoreScope(bool $enabled): void
     {
@@ -38,7 +47,7 @@ class ConfigTest extends TestCase
         ]);
         $encryptor = $this->createMock(EncryptorInterface::class);
         $encryptor->expects(self::once())->method('decrypt')->with('encrypted-secret')->willReturn('server-secret');
-        $config = new Config($scope, $encryptor);
+        $config = new Config($scope, $encryptor, $this->runtime());
         self::assertStringNotContainsString('server-secret', json_encode($config->settings(7)));
         self::assertSame('server-secret', $config->apiKey(7));
     }
@@ -63,19 +72,57 @@ class ConfigTest extends TestCase
         $policy = ($this->config($scope))->policy(7);
 
         self::assertSame($environment, $policy->environment);
-        self::assertSame('https://' . $environment . '.hideguard.example', $policy->endpointUrl);
+        self::assertSame($environment === 'production' ? 'https://hideguard.io' : 'https://dev.hideguard.io',
+            $policy->endpointUrl);
+        self::assertSame(Config::ACCESS_POINTS, $policy->accessPoints);
         self::assertSame('sdk-' . $environment, $policy->publicKey);
         self::assertSame('signature-' . $environment, $policy->signaturePublicKey);
     }
 
     public static function environments(): array
     {
-        return [['development'], ['staging'], ['production']];
+        return [['development'], ['production']];
+    }
+
+    public function testLegacyUrlsPointsAndSettingsInjectionCannotChangeEffectiveProtection(): void
+    {
+        $scope = $this->createMock(ScopeConfigInterface::class);
+        $scope->method('getValue')->willReturnCallback(function (string $path) {
+            self::assertFalse(str_ends_with($path, '/endpoint_url'), 'Legacy URL must not be read.');
+            self::assertFalse(str_ends_with($path, '/protected_points'), 'Legacy points must not be read.');
+            return match ($path) {
+                Config::SECTION . '/general/enabled' => '1',
+                Config::SECTION . '/development/public_key' => 'fixture',
+                Config::SECTION . '/general/protected_paths' => "contact\nCampaign/*",
+                default => null,
+            };
+        });
+        $config = $this->config($scope);
+        $settings = $config->settings(7);
+        self::assertSame(['contact', 'Campaign/*'], $settings['pageRules']);
+        self::assertSame(Config::ACCESS_POINTS, $settings['points']);
+        $settings['points'] = [];
+        $settings['keys']['development']['endpointUrl'] = 'https://forged.example';
+        $policy = $config->toPolicy($settings);
+        self::assertSame('https://dev.hideguard.io', $policy->endpointUrl);
+        self::assertSame(Config::ACCESS_POINTS, $policy->accessPoints);
+        foreach (['cart', 'checkout', 'payment', 'complete_order', 'login', 'form.submit'] as $action) {
+            self::assertTrue($policy->protects($action));
+        }
+    }
+
+    public function testLegacyStagingCannotBeUsedAsANewMagentoMode(): void
+    {
+        $config = $this->config($this->createStub(ScopeConfigInterface::class));
+        $settings = $config->settings(7);
+        $settings['environment'] = 'staging';
+        $this->expectException(GuardException::class);
+        $config->toPolicy($settings);
     }
 
     private function config(ScopeConfigInterface $scope): Config
     {
-        return new Config($scope, $this->createMock(EncryptorInterface::class));
+        return new Config($scope, $this->createMock(EncryptorInterface::class), $this->runtime());
     }
 
     private function settings($duration): array

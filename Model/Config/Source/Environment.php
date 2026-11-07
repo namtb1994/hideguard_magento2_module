@@ -11,16 +11,16 @@ class Environment implements OptionSourceInterface
 {
     /**
      * @inheritdoc
+     * @return list<array{value:string,label:\Magento\Framework\Phrase}>
      */
     public function toOptionArray(): array
     {
         $labels = [
-            'development' => __('Development'),
-            'staging' => __('Staging'),
+            'development' => __('Testing'),
             'production' => __('Production'),
         ];
         return array_map(
-            static fn(string $value): array => ['value' => $value, 'label' => $labels[$value] ?? $value],
+            static fn(string $value): array => ['value' => $value, 'label' => $labels[$value]],
             ProtectionPolicy::ENVIRONMENTS
         );
     }

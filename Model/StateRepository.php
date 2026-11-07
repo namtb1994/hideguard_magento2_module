@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Hachitechs\Hideguard\Model;
 
+use Magento\Framework\ObjectManager\ResetAfterRequestInterface;
+use Hachitechs\HideguardPhp\Storage\MySqlControl;
+use Hachitechs\HideguardPhp\Access\CleanupResult;
+use Hachitechs\HideguardPhp\Contracts\SessionCounterContract;
+use Hachitechs\HideguardPhp\Contracts\BatchCleanupContract;
 use Hachitechs\HideguardPhp\Access\BrowserState;
 use Hachitechs\HideguardPhp\Access\RateWindow;
 use Hachitechs\HideguardPhp\Access\ResourceRef;
@@ -11,8 +16,14 @@ use Hachitechs\HideguardPhp\Contracts\StorageContract;
 use Magento\Framework\App\ResourceConnection;
 
 /** Persistence mapping for the existing Magento tables; policy lives in Guard. */
-class StateRepository implements StorageContract
+class StateRepository implements
+    StorageContract,
+    BatchCleanupContract,
+    SessionCounterContract,
+    ResetAfterRequestInterface
 {
+    private ?MySqlControl $counter = null;
+
     /**
      * Initialize platform dependencies.
      *
@@ -37,6 +48,7 @@ class StateRepository implements StorageContract
      */
     public function saveSession(string $scopeId, BrowserState $state): void
     {
+        $new = $this->control()->beforeSave((string)$this->storeId($scopeId), $state->browserId, 'session_hash');
         $quoteId = $state->resource === null ? null : $this->quoteId($state->resource);
         $this->resource->getConnection()->insertOnDuplicate($this->table('session'), [
             'store_id' => $this->storeId($scopeId), 'session_hash' => $state->browserId,
@@ -47,6 +59,9 @@ class StateRepository implements StorageContract
             'last_seen' => $state->lastSeen, 'verification' => $state->verification,
             'verification_id' => $state->verificationId, 'verification_until' => $state->verificationUntil,
         ]);
+        if ($new) {
+            $this->control()->inserted((string)$this->storeId($scopeId));
+        }
     }
 
     /**
@@ -54,9 +69,22 @@ class StateRepository implements StorageContract
      */
     public function sessionCount(string $scopeId): int
     {
-        $db = $this->resource->getConnection();
-        return (int)$db->fetchOne($db->select()->from($this->table('session'), ['count' => 'COUNT(*)'])
-            ->where('store_id = ?', $this->storeId($scopeId)));
+        return $this->control()->count((string)$this->storeId($scopeId));
+    }
+
+    public function reconcileSessionCount(string $scopeId): int
+    {
+        return $this->control()->reconcile((string)$this->storeId($scopeId));
+    }
+
+    protected function control(): MySqlControl
+    {
+        return $this->counter ??= new MySqlControl(
+            $this->resource->getConnection()->getConnection(),
+            $this->table('control'),
+            'store_id',
+            $this->table('session')
+        );
     }
 
     /**
@@ -163,6 +191,13 @@ class StateRepository implements StorageContract
      */
     public function rate(string $scopeId, string $bucketHash): ?RateWindow
     {
+        if (
+            $bucketHash === hash('sha256', 'scope')
+            && $this->resource->getConnection()->getConnection()->inTransaction()
+        ) {
+            $row = $this->control()->lockScopeRate($this->table('rate'), (string)$this->storeId($scopeId), $bucketHash);
+            return $row === null ? null : new RateWindow((int)$row['requests'], (int)$row['expires_at']);
+        }
         $db = $this->resource->getConnection();
         $row = $db->fetchRow($db->select()->from($this->table('rate'))
             ->where('store_id = ?', $this->storeId($scopeId))->where('bucket_hash = ?', $bucketHash));
@@ -185,14 +220,51 @@ class StateRepository implements StorageContract
      */
     public function cleanup(string $scopeId, int $now, int $inactiveBefore): void
     {
+        while ($this->cleanupBatch($scopeId, $now, $inactiveBefore, 500)->hasMore) {
+        }
+    }
+
+    public function cleanupBatch(string $scopeId, int $now, int $inactiveBefore, int $limit): CleanupResult
+    {
+        if ($limit < 1 || $limit > 10000) {
+            throw new \InvalidArgumentException('Batch limit must be between 1 and 10000.');
+        }
+        $scope = $this->storeId($scopeId);
+        $counts = [];
+        $conditions = [
+            'block' => ['blocked_until <= ?' => $now],
+            'rate' => ['expires_at <= ?' => $now],
+            'session' => ['last_seen < ?' => $inactiveBefore, 'blocked_until <= ?' => $now,
+                'granted_until <= ?' => $now, 'verification_until <= ?' => $now],
+        ];
         $db = $this->resource->getConnection();
-        $storeId = $this->storeId($scopeId);
-        $db->delete($this->table('block'), ['store_id = ?' => $storeId, 'blocked_until <= ?' => $now]);
-        $db->delete($this->table('rate'), ['store_id = ?' => $storeId, 'expires_at <= ?' => $now]);
-        $db->delete($this->table('session'), [
-            'store_id = ?' => $storeId, 'last_seen < ?' => $inactiveBefore,
-            'blocked_until <= ?' => $now, 'granted_until <= ?' => $now,
-        ]);
+        $remaining = $limit;
+        foreach ($conditions as $suffix => $where) {
+            $counts[$suffix] = 0;
+            if ($remaining === 0) {
+                continue;
+            }
+            if ($suffix === 'session') {
+                $this->control()->count((string)$scope);
+            }
+            $parts = [$db->quoteInto('store_id = ?', $scope)];
+            foreach ($where as $clause => $value) {
+                $parts[] = $db->quoteInto($clause, $value);
+            }
+            $db->query('DELETE FROM ' . $db->quoteIdentifier($this->table($suffix)) . ' WHERE '
+                . implode(' AND ', $parts) . ' LIMIT ' . $remaining);
+            $counts[$suffix] = (int)$db->fetchOne('SELECT ROW_COUNT()');
+            if ($suffix === 'session') {
+                $this->control()->removed((string)$scope, $counts[$suffix]);
+            }
+            $remaining -= $counts[$suffix];
+        }
+        return new CleanupResult(
+            $counts['block'],
+            $counts['rate'],
+            $counts['session'],
+            $remaining === 0
+        );
     }
 
     /**
@@ -293,5 +365,12 @@ class StateRepository implements StorageContract
     private function table(string $suffix): string
     {
         return $this->resource->getTableName('hachitech_antidetect_' . $suffix);
+    }
+
+    /** Release PDO-bound helpers when Magento closes its resource connection between requests. */
+    // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore -- Required by Magento reset contract.
+    public function _resetState(): void
+    {
+        $this->counter = null;
     }
 }

@@ -39,6 +39,7 @@ class Bootstrap extends Template
         $storeId = (int)$this->_storeManager->getStore()->getId();
         if ($this->config->settings($storeId)['enabled']
             && ($this->rules->protects((string)$this->getRequest()->getPathInfo(), $storeId)
+                && !$this->rules->isCheckoutSuccess((string)$this->getRequest()->getPathInfo())
                 || $this->isGatePage())
             && $this->pageConfig->getElementAttribute(PageConfig::ELEMENT_TYPE_BODY, 'inert') === null
         ) {
@@ -57,8 +58,10 @@ class Bootstrap extends Template
     {
         $storeId = (int)$this->_storeManager->getStore()->getId();
         $settings = $this->config->settings($storeId);
-        $page = $this->isGatePage() ? 'gate' : '';
-        $pageProtected = $this->rules->protects((string)$this->getRequest()->getPathInfo(), $storeId);
+        $successPage = $this->rules->isCheckoutSuccess((string)$this->getRequest()->getPathInfo());
+        $page = $this->isGatePage() ? 'gate' : ($successPage ? 'checkout_success' : '');
+        // PageAccess verifies success before its controller clears the checkout session.
+        $pageProtected = !$successPage && $this->rules->protects((string)$this->getRequest()->getPathInfo(), $storeId);
         // Unprotected pages still listen for action denials; initialization does not start the SDK there.
         $enabled = $settings['enabled'];
         $initialState = 'pending';

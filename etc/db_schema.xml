@@ -58,4 +58,21 @@
             <column name="expires_at"/>
         </index>
     </table>
+    <table name="hachitech_antidetect_control" resource="default" engine="innodb" comment="HideGuard Fences and Session Counters">
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store ID"/>
+        <column xsi:type="varchar" name="name" length="32" nullable="false" comment="Control Row Name"/>
+        <column xsi:type="bigint" name="value" unsigned="true" nullable="false" default="0" comment="Counter Value"/>
+        <column xsi:type="smallint" name="initialized" unsigned="true" nullable="false" default="0" comment="Counter Initialized"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY"><column name="store_id"/><column name="name"/></constraint>
+    </table>
+    <table name="hachitech_antidetect_circuit" resource="default" engine="innodb" comment="HideGuard Shared Circuit State">
+        <column xsi:type="varchar" name="circuit_key" length="64" nullable="false" comment="Hashed Circuit Key"/>
+        <column xsi:type="int" name="failures" unsigned="true" nullable="false" default="0" comment="Consecutive Failures"/>
+        <column xsi:type="bigint" name="window_start" unsigned="true" nullable="false" default="0" comment="Window Start"/>
+        <column xsi:type="bigint" name="open_until" unsigned="true" nullable="false" default="0" comment="Open Deadline"/>
+        <column xsi:type="bigint" name="generation" unsigned="true" nullable="false" default="0" comment="State Generation"/>
+        <column xsi:type="varchar" name="probe_token" length="32" nullable="true" comment="Recovery Probe Token"/>
+        <column xsi:type="bigint" name="probe_until" unsigned="true" nullable="false" default="0" comment="Recovery Probe Deadline"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY"><column name="circuit_key"/></constraint>
+    </table>
 </schema>

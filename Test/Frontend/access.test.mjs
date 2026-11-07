@@ -132,6 +132,74 @@ test('Magento action denial locks the page and redirects to the common block gat
   assert.deepEqual(app.redirects, ['/blocked']);
 });
 
+test('successful order response preserves the native redirect against a late mini-cart denial', async () => {
+  const allowed = {status: 'allowed', allowed: true, passDuration: 0, expiresAt: Date.now() + 300000};
+  const app = browser({page: '', pageProtected: true, report: () => allowed});
+  await flush();
+  app.verdict('allow');
+  await flush();
+  const finishMiniCart = app.ajaxStart('/customer/section/load/?sections=cart,captcha,messages');
+  const callbacks = [];
+  const request = {done(callback) { callbacks.push(callback); return this; }};
+  const owner = {};
+  const placeOrder = app.placeOrder(function (...args) {
+    assert.equal(this, owner);
+    assert.deepEqual(args, ['/payment-information', {cartId: 6}]);
+    return request;
+  });
+  assert.equal(placeOrder.call(owner, '/payment-information', {cartId: 6}), request);
+  request.done(() => app.window.location.replace('/checkout/onepage/success/'));
+  callbacks.forEach(callback => callback(6));
+  finishMiniCart(403, 'denied', {status: 'verification_required'});
+  assert.deepEqual(app.redirects, ['/checkout/onepage/success/']);
+  assert.equal(app.document.body.hasAttribute('inert'), false);
+});
+
+test('an unsuccessful order cannot suppress a mini-cart verification denial', () => {
+  for (const response of [undefined, null, 0, {responseType: 'error'}]) {
+    const app = browser({page: '', pageProtected: false});
+    const callbacks = [];
+    const request = {done(callback) { callbacks.push(callback); return this; }};
+    app.placeOrder(() => request)();
+    callbacks.forEach(callback => callback(response));
+    app.ajaxComplete('/customer/section/load/', 403, 'denied', {status: 'verification_required'});
+    assert.deepEqual(app.redirects, ['/blocked']);
+  }
+});
+
+test('success page does not restart Always verification or redirect on a mini-cart refresh', async () => {
+  const app = browser({page: 'checkout_success', pageProtected: false});
+  await flush();
+  assert.equal(app.requests.length, 0);
+  assert.equal(app.scripts.length, 0);
+  assert.equal(app.locked, false);
+  app.ajaxComplete('/customer/section/load/', 403, 'denied', {status: 'verification_required'});
+  assert.deepEqual(app.redirects, []);
+  assert.equal(app.document.body.hasAttribute('inert'), false);
+});
+
+test('order completion never suppresses real blocks, errors or business action denials', () => {
+  for (const [url, status, data, destination] of [
+    ['/customer/section/load/', 401, {status: 'blocked'}, '/blocked'],
+    ['/customer/section/load/', 503, {status: 'error'}, '/failed'],
+    ['/rest/default/V1/carts/mine/payment-information', 403, {status: 'verification_required'}, '/blocked'],
+    ['/checkout/cart/add/', 403, {status: 'verification_required'}, '/blocked']
+  ]) {
+    const app = browser({page: 'checkout_success', pageProtected: false});
+    app.ajaxComplete(url, status, 'denied', data);
+    assert.deepEqual(app.redirects, [destination]);
+  }
+});
+
+test('a late fetch mini-cart denial also preserves the success page without locking it', async () => {
+  const response = {status: 403, headers: {get: () => 'denied'},
+    clone: () => ({json: async () => ({status: 'verification_required'})})};
+  const app = browser({page: 'checkout_success', pageProtected: false, fetchResponse: response});
+  assert.equal(await app.window.fetch('/customer/section/load/?sections=cart'), response);
+  assert.deepEqual(app.redirects, []);
+  assert.equal(app.document.body.hasAttribute('inert'), false);
+});
+
 test('unavailable action verification uses the failure gate and ignores unrelated or remote HTTP errors', () => {
   const app = browser({page: '', pageProtected: false});
   app.ajaxComplete('/customer/ajax/login', 401, null);

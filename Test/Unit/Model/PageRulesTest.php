@@ -17,7 +17,7 @@ class PageRulesTest extends TestCase
         $config = $this->createMock(Config::class);
         $config->method('settings')->willReturn(['enabled' => $enabled, 'points' => $points, 'pageRules' => $paths]);
         $rewrites = $this->createMock(UrlFinderInterface::class);
-        $rewrite = $target === null ? null : (new UrlRewrite())->setTargetPath($target);
+        $rewrite = $target === null ? null : (new UrlRewrite([], new \Magento\Framework\Serialize\Serializer\Json()))->setTargetPath($target);
         $rewrites->method('findOneByData')->willReturn($rewrite);
         return new PageRules($config, $rewrites, new \Hachitechs\HideguardPhp\Rules\PathMatcher());
     }
@@ -116,7 +116,13 @@ class PageRulesTest extends TestCase
         $rewrites = $this->createMock(UrlFinderInterface::class);
         $rewrites->expects(self::once())->method('findOneByData')->with([
             'request_path' => 'Diamond-Ring.html', 'store_id' => 1,
-        ])->willReturn((new UrlRewrite())->setTargetPath('catalog/Product/View/id/123'));
+        ])->willReturn((new UrlRewrite([], new \Magento\Framework\Serialize\Serializer\Json()))->setTargetPath('catalog/Product/View/id/123'));
         self::assertTrue((new PageRules($config, $rewrites, new \Hachitechs\HideguardPhp\Rules\PathMatcher()))->protects('/Diamond-Ring.html', 1));
+    }
+    public function testSnapshotTargetAndLiveRulesDecodeTargetsOnlyOnce(): void
+    {
+        self::assertTrue($this->rules(['product'], [], 'catalog%2Fproduct%2Fview/id/1')->protects('/alias', 1));
+        self::assertFalse($this->rules(['product'], [], 'catalog%252Fproduct%252Fview/id/1')->protects('/alias', 1));
+        self::assertFalse($this->rules(['product'])->protectsTarget('catalog%252Fproduct%252Fview/id/1', ['product']));
     }
 }

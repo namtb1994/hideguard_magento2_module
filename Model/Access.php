@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Hachitechs\Hideguard\Model;
 
+use Hachitechs\HideguardPhp\Contracts\BatchGuardContract;
 use Hachitechs\HideguardPhp\Access\AccessContext;
 use Hachitechs\HideguardPhp\Access\ResourceRef;
 use Hachitechs\HideguardPhp\Contracts\GuardContract;
@@ -27,7 +28,8 @@ class Access
         private readonly Config $config,
         private readonly GuardContract $guard,
         private readonly BrowserIdentity $identity,
-        private readonly StoreManagerInterface $stores
+        private readonly StoreManagerInterface $stores,
+        private readonly ?\Psr\Log\LoggerInterface $logger = null
     ) {
     }
 
@@ -168,8 +170,44 @@ class Access
      */
     public function cleanup(): void
     {
+        $failures = [];
         foreach ($this->stores->getStores() as $store) {
-            $this->guard->cleanup((string)$store->getId(), $this->config->policy((int)$store->getId()));
+            $id = (string)$store->getId();
+            try {
+                $policy = $this->config->policy((int)$id);
+                if (
+                    $this->guard instanceof BatchGuardContract
+                    && $this->guard->supportsBatchCleanup()
+                ) {
+                    for ($batch = 0; $batch < 10; $batch++) {
+                        $result = $this->guard->cleanupBatch($id, $policy);
+                        if (!$result->hasMore) {
+                            break;
+                        }
+                    }
+                    if ($result->hasMore) {
+                        try {
+                            $this->logger?->notice(
+                                'HideGuard cleanup budget exhausted; next cron continues.',
+                                ['store_id' => $id]
+                            );
+                        } catch (\Throwable) {
+                        /* Logging cannot stop cleanup for another store. */
+                        }
+                    }
+                } else {
+                    $this->guard->cleanup($id, $policy);
+                }
+            } catch (\Throwable $error) {
+                $failures[$id] = $error;
+            }
+        }
+        if ($failures !== []) {
+            throw new \RuntimeException(
+                'HideGuard cleanup failed for stores: ' . implode(', ', array_keys($failures)),
+                0,
+                reset($failures)
+            );
         }
     }
 

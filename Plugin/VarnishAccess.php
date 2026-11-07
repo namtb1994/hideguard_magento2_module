@@ -22,7 +22,8 @@ class VarnishAccess
     public function __construct(
         private readonly Config $config,
         private readonly StoreManagerInterface $stores,
-        private readonly PathMatcher $paths
+        private readonly PathMatcher $paths,
+        private readonly ?\Hachitechs\Hideguard\Model\Cache\ManagedVcl $managed = null
     ) {
     }
 
@@ -35,6 +36,9 @@ class VarnishAccess
      */
     public function afterGenerateVcl(VclGeneratorInterface $subject, string $result): string
     {
+        if ($this->managed?->enabled()) {
+            return $this->managed->generate($result);
+        }
         $conditions = [];
         /** @var Store $store */
         foreach ($this->stores->getStores() as $store) {

@@ -4,21 +4,11 @@
         <hachitech_antidetectbrowser>
             <general>
                 <enabled>0</enabled>
-                <environment>development</environment>
-                <protected_points>all_pages,complete_order</protected_points>
-                <block_duration>3600</block_duration>
-                <pass_duration>300</pass_duration>
+                <environment>production</environment>
+                <block_duration>900</block_duration>
+                <pass_duration>0</pass_duration>
                 <debug>0</debug>
             </general>
-            <development>
-                <endpoint_url>https://hideguard.io</endpoint_url>
-            </development>
-            <staging>
-                <endpoint_url>https://hideguard.io</endpoint_url>
-            </staging>
-            <production>
-                <endpoint_url>https://hideguard.io</endpoint_url>
-            </production>
         </hachitech_antidetectbrowser>
     </default>
 </config>

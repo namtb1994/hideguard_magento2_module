@@ -15,6 +15,16 @@ use Magento\Store\Model\StoreManagerInterface;
 
 class CheckAction implements ObserverInterface
 {
+    /** Native mutations are enforced at their public service, before its side effects. */
+    public const SERVICE_EVENTS = [
+        'controller_action_predispatch_checkout_cart_add' => \Magento\Checkout\Controller\Cart\Add::class,
+        'controller_action_predispatch_customer_account_loginpost'
+            => \Magento\Customer\Controller\Account\LoginPost::class,
+        'controller_action_predispatch_customer_ajax_login' => \Magento\Customer\Controller\Ajax\Login::class,
+        'controller_action_predispatch_customer_account_createpost'
+            => \Magento\Customer\Controller\Account\CreatePost::class,
+    ];
+
     /** Predispatch events run after native request/CSRF validation and before business actions. */
     public const EVENTS = [
         'controller_action_predispatch_checkout_index_index' => 'checkout',
@@ -55,20 +65,34 @@ class CheckAction implements ObserverInterface
     public function execute(Observer $observer): void
     {
         $event = $observer->getEvent()->getName();
+        $request = null;
         if ($event === 'controller_action_predispatch') {
             /** @var \Magento\Framework\App\Request\Http $request */
             $request = $observer->getEvent()->getData('request');
             $event .= '_' . strtolower((string)$request->getFullActionName());
-            if (!isset(self::EVENTS[$event]) && $request->isPost()) {
-                $storeId = (int)$this->stores->getStore()->getId();
-                $action = 'form:' . $request->getFullActionName();
-                if ($this->rules->protects((string)$request->getPathInfo(), $storeId)
-                    && $this->verdict->checkBrowser($storeId, $action)['status'] !== 'allowed'
-                ) {
-                    $this->actionFlag->set('', ActionInterface::FLAG_NO_DISPATCH, '1');
-                }
+        }
+        // Exclude covered routes before the generic POST fallback as well as the named mapping.
+        if (isset(self::SERVICE_EVENTS[$event])) {
+            $controller = $observer->getEvent()->getData('controller_action');
+            $class = $controller === null ? null : get_class($controller);
+            if ($controller instanceof \Magento\Framework\Interception\InterceptorInterface) {
+                $class = get_parent_class($controller);
+            }
+            // Unknown controller preferences retain predispatch protection even on a native action name.
+            if ($class === self::SERVICE_EVENTS[$event]) {
                 return;
             }
+        }
+        if ($request !== null && !isset(self::EVENTS[$event]) && $request->isPost()) {
+            $storeId = (int)$this->stores->getStore()->getId();
+            $action = 'form:' . $request->getFullActionName();
+            if (
+                $this->rules->protects((string)$request->getPathInfo(), $storeId)
+                && $this->verdict->checkBrowser($storeId, $action)['status'] !== 'allowed'
+            ) {
+                $this->actionFlag->set('', ActionInterface::FLAG_NO_DISPATCH, '1');
+            }
+            return;
         }
         if (!isset(self::EVENTS[$event])) {
             return;

@@ -48,9 +48,9 @@ class ValidateSettings
             $settings = $this->config->read('default', null);
             $parent = $settings;
         }
-        $groups = (array)$subject->getGroups();
+        $groups = (array)$subject->getData('groups');
         $fields = [
-            'enabled' => 'enabled', 'environment' => 'environment', 'protected_points' => 'points',
+            'enabled' => 'enabled', 'environment' => 'environment',
             'protected_paths' => 'pageRules', 'block_duration' => 'blockDuration', 'pass_duration' => 'passDuration',
         ];
         foreach ($fields as $field => $name) {
@@ -67,15 +67,11 @@ class ValidateSettings
                 'enabled' => (bool)$value,
                 'block_duration' => (int)$value,
                 'pass_duration' => filter_var($value, FILTER_VALIDATE_INT, ['options' => ['default' => -1]]),
-                'protected_points' => is_array($value)
-                    ? array_values(array_filter($value, 'strlen'))
-                    : array_values(array_filter(explode(',', (string)$value))),
                 'protected_paths' => $this->config->normalizePaths((string)$value),
                 default => (string)$value,
             };
         }
         $profileFields = [
-            'endpoint_url' => 'endpointUrl',
             'public_key' => 'publicKey',
             'signature_public_key' => 'signaturePublicKey',
         ];

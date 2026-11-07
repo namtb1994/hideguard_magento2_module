@@ -8,6 +8,10 @@
         </arguments>
     </type>
     <!-- Protection commits must survive a rollback of the surrounding checkout transaction. -->
+    <virtualType name="HachitechsHideguardCircuitResource" type="Magento\Framework\App\ResourceConnection"/>
+    <type name="Hachitechs\Hideguard\Model\CircuitStore">
+        <arguments><argument name="resource" xsi:type="object">HachitechsHideguardCircuitResource</argument></arguments>
+    </type>
     <virtualType name="HachitechsHideguardResource" type="Magento\Framework\App\ResourceConnection"/>
     <type name="Hachitechs\Hideguard\Model\StateRepository">
         <arguments>
@@ -76,6 +80,8 @@
         <arguments>
             <argument name="transport" xsi:type="object">HachitechsHideguardHttpTransport</argument>
             <argument name="logger" xsi:type="object">HachitechsHideguardDebugLogger</argument>
+            <argument name="circuits" xsi:type="object">Hachitechs\Hideguard\Model\CircuitStore</argument>
+            <argument name="clock" xsi:type="object">Hachitechs\HideguardPhp\Support\SystemClock</argument>
         </arguments>
     </type>
     <virtualType name="HachitechsHideguardDebugLogger" type="Magento\Framework\Logger\Monolog">
@@ -121,4 +127,26 @@
     <type name="Magento\PageCache\Model\VclGeneratorInterface">
         <plugin name="hachitech_antidetect_varnish_pass" type="Hachitechs\Hideguard\Plugin\VarnishAccess"/>
     </type>
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments><argument name="commands" xsi:type="array">
+            <item name="hideguard_cache_policy" xsi:type="object">Hachitechs\Hideguard\Console\Command\CachePolicy</item>
+            <item name="hideguard_sessions_reconcile" xsi:type="object">Hachitechs\Hideguard\Console\Command\ReconcileSessions</item>
+        </argument></arguments>
+    </type>
+    <virtualType name="HachitechsHideguardSnapshotResource" type="Magento\Framework\App\ResourceConnection"/>
+    <type name="Hachitechs\Hideguard\Model\Cache\SnapshotReader"><arguments>
+        <argument name="resource" xsi:type="object">HachitechsHideguardSnapshotResource</argument>
+    </arguments></type>
+    <type name="Hachitechs\Hideguard\Plugin\VarnishAccess"><arguments>
+        <argument name="managed" xsi:type="object">Hachitechs\Hideguard\Model\Cache\ManagedVcl</argument>
+    </arguments></type>
+    <type name="Magento\Config\Model\ResourceModel\Config"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\Store\Model\ResourceModel\Store"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\Store\Model\ResourceModel\Group"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\Store\Model\ResourceModel\Website"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\UrlRewrite\Model\UrlPersistInterface"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\UrlRewrite\Model\ResourceModel\UrlRewrite"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\Config\Model\ResourceModel\Config\Data"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\Config\Model\Config\Importer"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
+    <type name="Magento\Store\Model\Config\Importer"><plugin name="hideguard_cache_policy_mutation" type="Hachitechs\Hideguard\Plugin\CachePolicyMutation" sortOrder="-1000"/></type>
 </config>

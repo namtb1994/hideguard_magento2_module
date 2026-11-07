@@ -50,5 +50,30 @@
         "constraint": {
             "PRIMARY": true
         }
+    },
+    "hachitech_antidetect_control": {
+        "column": {
+            "store_id": true,
+            "name": true,
+            "value": true,
+            "initialized": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "hachitech_antidetect_circuit": {
+        "column": {
+            "circuit_key": true,
+            "failures": true,
+            "window_start": true,
+            "open_until": true,
+            "generation": true,
+            "probe_token": true,
+            "probe_until": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
     }
 }

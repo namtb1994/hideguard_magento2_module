@@ -28,8 +28,7 @@ class CheckActionTest extends TestCase
     public static function controllerActions(): array
     {
         return [['checkout_index_index'], ['checkout_onepage_index'], ['onestepcheckout_index_index'],
-            ['checkout_onepage_saveOrder'], ['checkout_cart_add'],
-            ['customer_account_loginPost'], ['customer_ajax_login'], ['customer_account_createPost'],
+            ['checkout_onepage_saveOrder'],
             ['sociallogin_popup_create'], ['sociallogin_social_login'], ['sociallogin_social_callback'],
             ['sociallogin_social_email'], ['contact_index_post']];
     }
@@ -42,7 +41,7 @@ class CheckActionTest extends TestCase
 
     public function testBackendAllowLetsTheNativeControllerProceed(): void
     {
-        $this->execute('customer_account_loginPost', true, 'allowed', true);
+        $this->execute('contact_index_post', true, 'allowed', true);
     }
 
     /** @dataProvider quoteEvents */
@@ -86,7 +85,21 @@ class CheckActionTest extends TestCase
         ]));
     }
 
-    private function execute(string $action, bool $enabled, string $status, bool $checked): void
+    public function testServiceCoveredPostsSkipBothNamedAndGenericChecks(): void
+    {
+        foreach (['checkout_cart_add', 'customer_account_loginPost', 'customer_ajax_login',
+            'customer_account_createPost'] as $action
+        ) {
+            $this->execute($action, true, 'blocked', false);
+        }
+    }
+
+    public function testUnknownControllerOnNativeRouteRetainsPredispatchProtection(): void
+    {
+        $this->execute('checkout_cart_add', true, 'blocked', true, false);
+    }
+
+    private function execute(string $action, bool $enabled, string $status, bool $checked, bool $native = true): void
     {
         $verdict = $this->createMock(ActionVerdict::class);
         $verdict->expects($checked ? self::once() : self::never())->method('checkBrowser')->with(1, CheckAction::EVENTS['controller_action_predispatch_' . strtolower($action)] ?? '')
@@ -102,8 +115,13 @@ class CheckActionTest extends TestCase
             ->method('set')->with('', ActionInterface::FLAG_NO_DISPATCH, '1');
         $request = $this->createMock(Http::class);
         $request->method('getFullActionName')->willReturn($action);
+        $request->method('isPost')->willReturn(true);
+        $controllerClass = CheckAction::SERVICE_EVENTS['controller_action_predispatch_' . strtolower($action)] ?? null;
+        $controller = $native && $controllerClass !== null
+            ? (new \ReflectionClass($controllerClass))->newInstanceWithoutConstructor() : null;
         (new CheckAction($verdict, $config, $stores, $flag, $this->createMock(PageRules::class)))->execute(new Observer([
-            'event' => new Event(['name' => 'controller_action_predispatch', 'request' => $request]),
+            'event' => new Event(['name' => 'controller_action_predispatch', 'request' => $request,
+                'controller_action' => $controller]),
         ]));
     }
 }

@@ -24,7 +24,18 @@ class ValidateSettingsTest extends TestCase
             'keys' => array_fill_keys(ProtectionPolicy::ENVIRONMENTS, [
                 'publicKey' => '', 'signaturePublicKey' => '', 'endpointUrl' => ProtectionPolicy::DEFAULT_ENDPOINT_URL,
             ])];
-        $config ??= $this->getMockBuilder(Config::class)->disableOriginalConstructor()->onlyMethods(['read'])->getMock();
+        if ($config === null) {
+            $deployment = $this->createStub(\Magento\Framework\App\DeploymentConfig::class);
+            $deployment->method('get')->willReturnCallback(fn($key, $default = null) => $default);
+            $runtime = new \Hachitechs\Hideguard\Model\Config\RuntimeSettings(
+                $deployment,
+                $this->createStub(StoreManagerInterface::class)
+            );
+            $config = $this->getMockBuilder(Config::class)->setConstructorArgs([
+                $this->createStub(\Magento\Framework\App\Config\ScopeConfigInterface::class),
+                $this->createStub(\Magento\Framework\Encryption\EncryptorInterface::class), $runtime,
+            ])->onlyMethods(['read'])->getMock();
+        }
         $config->method('read')->willReturn($settings);
         $subject = $this->getMockBuilder(SystemConfig::class)->disableOriginalConstructor()
             ->onlyMethods([])->getMock();
@@ -32,32 +43,30 @@ class ValidateSettingsTest extends TestCase
         return [new ValidateSettings($config, $this->createMock(StoreManagerInterface::class)), $subject];
     }
 
-    public function testEndpointUrlCanBeSavedInANestedEnvironmentProfile(): void
+    public function testLegacyEndpointAndPointsPostAreIgnored(): void
     {
-        [$validator, $subject] = $this->validator(['general' => ['groups' => ['staging' => ['fields' => [
-            'endpoint_url' => ['value' => 'https://staging.hideguard.example:8443/'],
-        ]]]]]);
+        $config = $this->getMockBuilder(Config::class)->disableOriginalConstructor()
+            ->onlyMethods(['read', 'toPolicy'])->getMock();
+        $config->expects(self::exactly(3))->method('toPolicy')->with(self::callback(
+            fn(array $settings) => $settings['points'] === ['all_pages']
+                && $settings['keys']['development']['endpointUrl'] === ProtectionPolicy::DEFAULT_ENDPOINT_URL
+        ))->willReturn(new ProtectionPolicy());
+        [$validator, $subject] = $this->validator(['general' => [
+            'fields' => ['protected_points' => ['value' => []]],
+            'groups' => ['development' => ['fields' => [
+                'endpoint_url' => ['value' => 'http://forged.example/path'],
+            ]]],
+        ]], $config);
         $validator->beforeSave($subject);
-        self::assertTrue(true);
     }
 
-    public function testInvalidEndpointInADormantProfileCannotBeSaved(): void
+    public function testStagingPostIsRejected(): void
     {
-        [$validator, $subject] = $this->validator(['general' => ['groups' => ['production' => ['fields' => [
-            'endpoint_url' => ['value' => 'http://insecure.hideguard.example/path'],
-        ]]]]]);
+        [$validator, $subject] = $this->validator(['general' => [
+            'fields' => ['environment' => ['value' => 'staging']],
+        ]]);
         $this->expectException(LocalizedException::class);
         $validator->beforeSave($subject);
-    }
-
-    public function testEndpointUrlCanInheritTheParentValue(): void
-    {
-        [$validator, $subject] = $this->validator(['general' => ['groups' => ['development' => ['fields' => [
-            'endpoint_url' => ['inherit' => '1', 'value' => 'invalid-local-value'],
-        ]]]]]);
-        $subject->setWebsite(2);
-        $validator->beforeSave($subject);
-        self::assertTrue(true);
     }
 
     public function testEnableWithoutPublicKeyIsRejectedOnServer(): void
@@ -135,11 +144,11 @@ class ValidateSettingsTest extends TestCase
         return $cases;
     }
 
-    public function testUnknownPointCannotBeSaved(): void
+    public function testLegacyUnknownPointIsIgnored(): void
     {
         [$validator, $subject] = $this->validator(['general' => ['fields' => ['protected_points' => ['value' => ['shopify_rule']]]]]);
-        $this->expectException(LocalizedException::class);
         $validator->beforeSave($subject);
+        self::assertTrue(true);
     }
 
     /** @dataProvider passDurations */
@@ -181,7 +190,7 @@ class ValidateSettingsTest extends TestCase
     {
         $config = $this->getMockBuilder(Config::class)->disableOriginalConstructor()
             ->onlyMethods(['read', 'toPolicy'])->getMock();
-        $config->expects(self::exactly(4))->method('toPolicy')->with(self::callback(
+        $config->expects(self::exactly(3))->method('toPolicy')->with(self::callback(
             fn(array $settings) => $settings['pageRules'] === ['0', 'Campaign/*']
         ))->willReturn(new ProtectionPolicy());
         [$validator, $subject] = $this->validator([

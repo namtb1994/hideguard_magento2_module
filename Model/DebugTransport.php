@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Hachitechs\Hideguard\Model;
 
+use Hachitechs\HideguardPhp\Support\SystemClock;
+use Hachitechs\HideguardPhp\Http\CircuitBreakingTransport;
+use Hachitechs\HideguardPhp\Contracts\CircuitBreakerStoreContract;
 use Hachitechs\HideguardPhp\Contracts\HttpTransport;
 use Hachitechs\HideguardPhp\Exceptions\ApiException;
 use Hachitechs\HideguardPhp\Http\HttpResponse;
@@ -23,7 +26,9 @@ class DebugTransport implements HttpTransport
         private readonly HttpTransport $transport,
         private readonly Config $config,
         private readonly LoggerInterface $logger,
-        private readonly int $storeId
+        private readonly int $storeId,
+        private readonly ?CircuitBreakerStoreContract $circuits = null,
+        private readonly ?\Psr\Clock\ClockInterface $clock = null
     ) {
     }
 
@@ -37,6 +42,20 @@ class DebugTransport implements HttpTransport
      */
     public function post(string $url, array $headers, string $body): HttpResponse
     {
+        $transport = $this->transport;
+        $circuit = $this->config->circuitSettings($this->storeId);
+        if ($circuit['enabled'] ?? false) {
+            if ($this->circuits === null) {
+                throw new ApiException('Circuit storage is not configured.', 503);
+            }
+            $transport = new CircuitBreakingTransport(
+                $transport,
+                $this->circuits,
+                $this->clock ?? new SystemClock(),
+                $circuit['policy'],
+                (string)$this->storeId
+            );
+        }
         try {
             $enabled = $this->config->debugEnabled($this->storeId);
         } catch (\Throwable) {
@@ -44,14 +63,14 @@ class DebugTransport implements HttpTransport
             $enabled = false;
         }
         if (!$enabled) {
-            return $this->transport->post($url, $headers, $body);
+            return $transport->post($url, $headers, $body);
         }
         $start = hrtime(true);
         $context = ['request_id' => hash('sha256', $this->storeId . ':' . $start . ':' . $body),
             'store_id' => $this->storeId, 'method' => 'POST', 'url' => $url];
         $this->write('HideGuard request', $context + ['request' => $this->summary($body)]);
         try {
-            $response = $this->transport->post($url, $headers, $body);
+            $response = $transport->post($url, $headers, $body);
         } catch (\Throwable $error) {
             $this->write('HideGuard transport error', $context + [
                 'duration_ms' => round((hrtime(true) - $start) / 1000000, 2),

@@ -17,16 +17,10 @@
                 <field id="environment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Environment</label>
                     <source_model>Hachitechs\Hideguard\Model\Config\Source\Environment</source_model>
-                    <comment>All environments verify HideGuard Ed25519 response signatures on the server.</comment>
+                    <comment>Testing uses https://dev.hideguard.io. Production uses https://hideguard.io. The SDK and backend verdict API use the selected mode. Both modes verify Ed25519 response signatures on the server.</comment>
                 </field>
                 <group id="development" translate="label" type="text" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Development Keys</label>
-                    <field id="endpoint_url" translate="label comment" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>HideGuard URL</label>
-                        <comment>HTTPS origin used to load the SDK and send HideGuard requests. No path, credentials, query or fragment; for example, https://hideguard.io.</comment>
-                        <validate>required-entry</validate>
-                        <config_path>hachitech_antidetectbrowser/development/endpoint_url</config_path>
-                    </field>
+                    <label>Testing Keys</label>
                     <field id="public_key" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Public Key</label>
                         <comment>Public HideGuard SDK site key. This key is published only when this environment is active.</comment>
@@ -48,43 +42,8 @@
                         <field id="hachitech_antidetectbrowser/general/environment">development</field>
                     </depends>
                 </group>
-                <group id="staging" translate="label" type="text" sortOrder="22" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Staging Keys</label>
-                    <field id="endpoint_url" translate="label comment" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>HideGuard URL</label>
-                        <comment>HTTPS origin used to load the SDK and send HideGuard requests. No path, credentials, query or fragment; for example, https://hideguard.io.</comment>
-                        <validate>required-entry</validate>
-                        <config_path>hachitech_antidetectbrowser/staging/endpoint_url</config_path>
-                    </field>
-                    <field id="public_key" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Public Key</label>
-                        <comment>Public HideGuard SDK site key. This key is published only when this environment is active.</comment>
-                        <config_path>hachitech_antidetectbrowser/staging/public_key</config_path>
-                    </field>
-                    <field id="api_key" translate="label comment" type="obscure" sortOrder="15" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>API Key</label>
-                        <comment>Server-only key for POST /api/v1/verdict. Required for payment, checkout, order, add-to-cart, login and registration checks. Stored encrypted and never sent to the browser.</comment>
-                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                        <config_path>hachitech_antidetectbrowser/staging/api_key</config_path>
-                    </field>
-                    <field id="signature_public_key" translate="label comment" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Signature Public Key</label>
-                        <comment>Ed25519 PEM public key issued for this site. Required in every environment. Never enter a private signing key. Kept on the server.</comment>
-                        <config_path>hachitech_antidetectbrowser/staging/signature_public_key</config_path>
-                    </field>
-                    <attribute type="expanded">1</attribute>
-                    <depends>
-                        <field id="hachitech_antidetectbrowser/general/environment">staging</field>
-                    </depends>
-                </group>
                 <group id="production" translate="label" type="text" sortOrder="23" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Production Keys</label>
-                    <field id="endpoint_url" translate="label comment" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>HideGuard URL</label>
-                        <comment>HTTPS origin used to load the SDK and send HideGuard requests. No path, credentials, query or fragment; for example, https://hideguard.io.</comment>
-                        <validate>required-entry</validate>
-                        <config_path>hachitech_antidetectbrowser/production/endpoint_url</config_path>
-                    </field>
                     <field id="public_key" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Public Key</label>
                         <comment>Public HideGuard SDK site key. This key is published only when this environment is active.</comment>
@@ -106,15 +65,9 @@
                         <field id="hachitech_antidetectbrowser/general/environment">production</field>
                     </depends>
                 </group>
-                <field id="protected_points" translate="label comment" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Protected Access Points</label>
-                    <source_model>Hachitechs\Hideguard\Model\Config\Source\Points</source_model>
-                    <comment>The SDK runs only for selected pages, additional path rules or protected actions. Pending pages remain visible under a transparent interaction lock. Confirmed blocks return HTTP 401; cart additions and order submission are checked on the server.</comment>
-                    <can_be_empty>1</can_be_empty>
-                </field>
                 <field id="protected_paths" translate="label comment" type="textarea" sortOrder="35" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Additional Protected Paths</label>
-                    <comment>One storefront path per line, without a query string. Wildcards are supported, for example *, customer/*, contact, category/*. Maximum 50 rules. Gate and verification endpoints remain reachable.</comment>
+                    <comment>All storefront pages are protected automatically. Existing path rules remain supported. One storefront path per line, without a query string. Wildcards are supported, for example *, customer/*, contact, category/*. Maximum 50 rules. Gate and verification endpoints remain reachable.</comment>
                 </field>
                 <field id="block_duration" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Block Duration</label>
