@@ -1,6 +1,16 @@
 {
     "name": "hachitechs/hideguard-m2",
-    "description": "HideGuard storefront and business action protection for Magento 2",
+    "description": "HideGuard Bot & Checkout Guard for Magento 2: browser verification and server-side protection for storefronts, carts, checkout and customer accounts.",
+    "keywords": [
+        "hideguard",
+        "magento2",
+        "magento2-module",
+        "magento-security",
+        "storefront-security",
+        "browser-verification",
+        "checkout-protection"
+    ],
+    "homepage": "https://hideguard.io/",
     "type": "magento2-module",
     "license": "proprietary",
     "require": {

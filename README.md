@@ -1,9 +1,26 @@
-# Hachitechs_Hideguard
+# HideGuard Bot & Checkout Guard for Magento 2
 
-Magento storefront and business action protection backed by the framework-independent
-`hachitechs/hideguard-php` library. Protection is disabled by default. When enabled,
-all storefront pages and the existing business action hooks are protected; customer
-login is not required.
+[HideGuard Bot & Checkout Guard](https://hideguard.io/) is a Magento 2 security extension that integrates
+browser verification with server-side access checks to protect storefront pages,
+checkout, customer accounts and form submissions. Built on the framework-independent
+`hachitechs/hideguard-php` library, it supports verification for both guest visitors
+and logged-in customers.
+
+## Key features
+
+- **Storefront protection:** browser verification and server-confirmed access for
+  all storefront pages when protection is enabled.
+- **Checkout and cart security:** fresh private verdicts before add-to-cart,
+  quote submission and order placement, including supported REST and GraphQL flows.
+- **Customer account and form protection:** server-side checks for login,
+  registration and supported storefront form submissions.
+- **Magento Admin configuration:** store-scoped settings, separate Testing and
+  Production credentials, timed blocks and configurable verification intervals.
+
+Protection is disabled by default. When enabled, all storefront pages and the
+existing business action hooks are protected; customer login is not required.
+
+Learn more about HideGuard at [hideguard.io](https://hideguard.io/).
 
 The Composer package name is `hachitechs/hideguard-m2`; the Magento module name
 and PHP namespace are `Hachitechs_Hideguard` and `Hachitechs\Hideguard`.
