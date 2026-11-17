@@ -47,11 +47,34 @@ The complete package dependency constraints are defined in `composer.json`.
 
 ## Installation
 
-Choose either a source download or Composer installation through GitHub. Run all
-commands below from the Magento project root. Configure repository authentication
-if access is private, and keep credentials out of source control.
+Choose either Composer installation from Packagist or a source download. Run all
+commands below from the Magento project root. Both HideGuard packages are available
+on Packagist; no custom GitHub VCS repository configuration is required when
+Packagist is enabled.
 
-### Option 1: Download to app/code
+### Option 1: Install with Composer from Packagist
+
+Install the [HideGuard Magento 2 package](https://packagist.org/packages/hachitechs/hideguard-m2):
+
+```sh
+composer require 'hachitechs/hideguard-m2:dev-master'
+```
+
+The currently published module version is `dev-master`. Specify this development
+version explicitly so installation works without changing the Magento project's
+`minimum-stability` setting.
+
+Composer installs the module under `vendor/hachitechs/hideguard-m2` and
+automatically installs a compatible `hachitechs/hideguard-php:^1.0` release from
+[Packagist](https://packagist.org/packages/hachitechs/hideguard-php). No separate
+library installation is needed for this method.
+
+Commit the root `composer.json` and `composer.lock` so subsequent
+`composer install` runs use the resolved versions and revisions. Do not keep
+another copy of the module in `app/code/Hachitechs/Hideguard` when using this
+method; Magento must register the module only once.
+
+### Option 2: Download to app/code
 
 #### Download and copy the module
 
@@ -69,42 +92,15 @@ archive directory level. Preserve the directory name capitalization shown above.
 
 #### Install the PHP library
 
-Configure the library repository in the Magento root Composer project, then
-install the required version:
+Install the required library from Packagist:
 
 ```sh
-composer config repositories.hideguard-php vcs https://github.com/namtb1994/hachitechs-hideguard-php.git
 composer require hachitechs/hideguard-php:^1.0
 ```
-
-If the library repository is already configured, skip the `composer config` step.
 
 Magento does not automatically install dependencies declared by modules copied
 into `app/code`. Install the library from the Magento root; do not run Composer
 inside the module directory.
-
-### Option 2: Install with Composer through GitHub
-
-Add both GitHub repositories to the Magento root Composer project, skipping any
-repository entries already configured:
-
-```sh
-composer config repositories.hideguard-m2 vcs https://github.com/namtb1994/hideguard_magento2_module.git
-composer config repositories.hideguard-php vcs https://github.com/namtb1994/hachitechs-hideguard-php.git
-composer require 'hachitechs/hideguard-m2:dev-master'
-```
-
-The `dev-master` constraint selects the module's `master` development branch.
-Composer installs the module under `vendor/hachitechs/hideguard-m2` and
-automatically resolves and installs `hachitechs/hideguard-php:^1.0` from the
-module's `require` declarations. No separate library `composer require` command
-is needed for this method.
-
-Both repositories must be configured in the Magento root: Composer does not load
-repository declarations from dependencies. Commit the root `composer.json` and
-`composer.lock` so subsequent `composer install` runs use the resolved revisions.
-Do not keep another copy of the module in `app/code/Hachitechs/Hideguard` when
-using this installation method; Magento must register the module only once.
 
 ### Enable and deploy the module
 
