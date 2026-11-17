@@ -57,12 +57,11 @@ Packagist is enabled.
 Install the [HideGuard Magento 2 package](https://packagist.org/packages/hachitechs/hideguard-m2):
 
 ```sh
-composer require 'hachitechs/hideguard-m2:dev-master'
+composer require hachitechs/hideguard-m2
 ```
 
-The currently published module version is `dev-master`. Specify this development
-version explicitly so installation works without changing the Magento project's
-`minimum-stability` setting.
+Composer selects a compatible stable release using the Magento project's existing
+dependency constraints. No change to `minimum-stability` is required.
 
 Composer installs the module under `vendor/hachitechs/hideguard-m2` and
 automatically installs a compatible `hachitechs/hideguard-php:^1.0` release from
@@ -95,7 +94,7 @@ archive directory level. Preserve the directory name capitalization shown above.
 Install the required library from Packagist:
 
 ```sh
-composer require hachitechs/hideguard-php:^1.0
+composer require hachitechs/hideguard-php
 ```
 
 Magento does not automatically install dependencies declared by modules copied
