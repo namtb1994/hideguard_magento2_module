@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 // Standalone P1/P2/P3 regression. All DB tables and barriers are randomly named and removed in finally.
 require dirname(__DIR__, 6) . '/app/bootstrap.php';
+require_once __DIR__ . '/FixtureVerdictVerifier.php';
 
 use Hachitechs\HideguardPhp\Access\AccessContext;
 use Hachitechs\HideguardPhp\Access\ResourceRef;
@@ -13,7 +14,7 @@ use Hachitechs\HideguardPhp\Exceptions\FailureReason;
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\HideguardPhp\Guard;
 use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
-use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
+use Hachitechs\Hideguard\Test\Integration\FixtureVerdictVerifier;
 use Hachitechs\Hideguard\Model\StateRepository;
 use Hachitechs\Hideguard\Model\StoreLock;
 use Magento\Framework\App\Bootstrap;
@@ -56,9 +57,9 @@ $make = function (string $adapter) use ($pdo, $prefix, $resource, $om): Guard {
         public function now(): DateTimeImmutable { return new DateTimeImmutable('@1000'); }
     };
     return Guard::factory()->withStorage($storage)->withAtomicMutation($atomic)->withClock($clock)
-        ->withVerifier(new DevelopmentVerifier())->make();
+        ->withVerifier(new FixtureVerdictVerifier())->make();
 };
-$policy = new ProtectionPolicy(enabled: true, publicKey: 'fixture',
+$policy = new ProtectionPolicy(enabled: true, publicKey: 'fixture', signaturePublicKey: 'fixture-signature',
     limits: new RateLimits(scopeRequests: 100, identityRequests: 1000));
 if ($worker) {
     $adapter = $argv[2];
@@ -75,10 +76,10 @@ if ($worker) {
         try {
             if ($mode === 'capacity') {
                 $guard->preflight(new AccessContext('64997', 'cap-' . $id),
-                    new ProtectionPolicy(enabled: true, publicKey: 'fixture', limits: new RateLimits(sessionCapacity: 2)));
+                    new ProtectionPolicy(enabled: true, publicKey: 'fixture', signaturePublicKey: 'fixture-signature', limits: new RateLimits(sessionCapacity: 2)));
             } elseif ($mode === 'bind') {
                 $guard->bindGrant(new AccessContext('64996', 'bind-' . $id),
-                    new ProtectionPolicy(enabled: true, publicKey: 'fixture'), new ResourceRef('quote', '123'));
+                    new ProtectionPolicy(enabled: true, publicKey: 'fixture', signaturePublicKey: 'fixture-signature'), new ResourceRef('quote', '123'));
             } elseif ($mode === 'probe') {
                 $circuit = $adapter === 'pdo'
                     ? new \Hachitechs\HideguardPhp\Storage\PdoCircuitBreakerStore($pdo, $prefix . 'pdo_circuit')
@@ -234,7 +235,7 @@ try {
         $storage->resetBlocks('64999');
         ensureTraffic($guard->inspect($context, $policy)->status !== 'blocked', 'Reset failed');
         echo 'PASS ' . $adapter . ': block revocation visible on second connection; logout and reset correct.' . PHP_EOL;
-        $warmPolicy = new ProtectionPolicy(enabled: true, publicKey: 'fixture',
+        $warmPolicy = new ProtectionPolicy(enabled: true, publicKey: 'fixture', signaturePublicKey: 'fixture-signature',
             limits: new RateLimits(scopeRequests: 1000, identityRequests: 1000));
         $warm = new AccessContext('64999', 'warm-p3');
         $attempt = $guard->preflight($warm, $warmPolicy);
@@ -331,7 +332,7 @@ try {
         $controlTable = $prefix . ($adapter === 'pdo' ? 'pdo_' : 'mag_') . 'control';
         $pdo->exec('UPDATE `' . $controlTable . '` SET value=99 WHERE ' . $scopeColumn . "=64997 AND name='sessions'");
         ensureTraffic($atomic->run('64997', fn() => $storage->reconcileSessionCount('64997')) === 2, 'Counter repair failed');
-        $bindingPolicy = new ProtectionPolicy(enabled: true, publicKey: 'fixture');
+        $bindingPolicy = new ProtectionPolicy(enabled: true, publicKey: 'fixture', signaturePublicKey: 'fixture-signature');
         $atomic->run('64996', function () use ($storage, $bindingPolicy): void {
             for ($i = 0; $i < 20; $i++) {
                 $storage->saveSession('64996', new \Hachitechs\HideguardPhp\Access\BrowserState('bind-' . $i,

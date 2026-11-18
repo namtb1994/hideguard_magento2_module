@@ -202,7 +202,7 @@ var HideGuardRuntime = (() => {
       }
     }
     function loadSdk() {
-      var script, endpointValue = config.endpointUrl ?? "https://hideguard.io", endpoint;
+      var script, endpointValue = config.endpointUrl, endpoint;
       if (!config.publicKey.trim()) {
         throw new Error("A Public key is required to verify access.");
       }

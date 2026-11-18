@@ -70,15 +70,15 @@ class ValidateSettings
                 default => (string)$value,
             };
         }
-        $profileFields = [
+        $credentialFields = [
             'public_key' => 'publicKey',
             'signature_public_key' => 'signaturePublicKey',
         ];
-        foreach ($profileFields as $field => $name) {
+        foreach ($credentialFields as $field => $name) {
             $posted = $groups['general']['fields'][$field] ?? null;
             if ($posted !== null) {
-                $settings['keys'][Config::ENVIRONMENT][$name] = !empty($posted['inherit'])
-                    ? $parent['keys'][Config::ENVIRONMENT][$name] : trim((string)($posted['value'] ?? ''));
+                $settings['keys'][$name] = !empty($posted['inherit'])
+                    ? $parent['keys'][$name] : trim((string)($posted['value'] ?? ''));
             }
         }
         try {

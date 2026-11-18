@@ -8,6 +8,7 @@ use Hachitechs\Hideguard\Block\Bootstrap;
 use Hachitechs\Hideguard\Model\Access;
 use Hachitechs\Hideguard\Model\Config;
 use Hachitechs\Hideguard\Model\PageRules;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\UrlInterface;
 use Magento\Framework\View\Element\Template\Context;
@@ -28,12 +29,12 @@ class BootstrapTest extends TestCase
         ?LoggerInterface $logger = null,
         array $points = ['product'],
         bool $enabled = true,
-        string $endpointUrl = 'https://hideguard.io'
+        string $endpointUrl = ProtectionPolicy::DEFAULT_ENDPOINT_URL
     ): Bootstrap {
         $config = $this->createMock(Config::class);
         $config->method('settings')->willReturn([
-            'enabled' => $enabled, 'points' => $points, 'environment' => 'production',
-            'keys' => ['production' => ['publicKey' => 'public-test-key', 'endpointUrl' => $endpointUrl]],
+            'enabled' => $enabled, 'points' => $points,
+            'keys' => ['publicKey' => 'public-test-key', 'endpointUrl' => $endpointUrl],
         ]);
         $rules = $this->createMock(PageRules::class);
         $rules->method('protects')->willReturn($protected);
@@ -68,7 +69,7 @@ class BootstrapTest extends TestCase
     {
         $block = $this->block($this->accessPending(), $this->createMock(PageConfig::class),
             endpointUrl: 'https://store.hideguard.example:8443');
-        self::assertSame('https://hideguard.io', $block->getBrowserConfig()['endpointUrl']);
+        self::assertSame(ProtectionPolicy::DEFAULT_ENDPOINT_URL, $block->getBrowserConfig()['endpointUrl']);
         self::assertArrayNotHasKey('signaturePublicKey', $block->getBrowserConfig());
     }
 

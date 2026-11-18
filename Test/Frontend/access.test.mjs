@@ -27,6 +27,13 @@ test('gate is locked synchronously before the first network response', async () 
   assert.equal(app.requests[0].credentials, 'same-origin');
 });
 
+test('missing endpoint does not load an SDK from a fallback host', async () => {
+  const app = browser({endpointUrl: null});
+  await flush();
+  assert.equal(app.scripts.length, 0);
+  assert.equal(app.gate.getAttribute('data-state'), 'error');
+});
+
 test('interaction lock is an AMD dependency initialized before access requests', () => {
   const app = browser();
   assert.ok(app.accessDependencies.includes('./runtime'));

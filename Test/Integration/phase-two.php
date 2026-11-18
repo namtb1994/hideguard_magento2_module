@@ -6,6 +6,7 @@ declare(strict_types=1);
 require dirname(__DIR__, 6) . '/app/bootstrap.php';
 
 use Hachitechs\Hideguard\Model\Config;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\Hideguard\Model\Config\RuntimeSettings;
 use Hachitechs\HideguardPhp\Access\BrowserState;
 use Magento\Framework\App\Bootstrap;
@@ -85,7 +86,8 @@ foreach (['public_key', 'api_key', 'signature_public_key'] as $field) {
     checkPhaseTwo(($fields[$field]['config_path'] ?? null) === Config::SECTION . '/production/' . $field,
         'Credential storage path changed: ' . $field);
 }
-checkPhaseTwo(str_contains((string)$fields['api_key']['comment'], 'https://hideguard.io/dashboard/'),
+$apiKeyField = $structure->getElement(Config::SECTION . '/general/api_key');
+checkPhaseTwo(str_contains($apiKeyField->getComment(), rtrim(ProtectionPolicy::DEFAULT_ENDPOINT_URL, '/') . '/dashboard/'),
     'API key dashboard link is missing');
 foreach (['development', 'staging', 'production'] as $mode) {
     $scopeFixture = new class ($mode) implements Magento\Framework\App\Config\ScopeConfigInterface {
@@ -107,7 +109,7 @@ foreach (['development', 'staging', 'production'] as $mode) {
         }
     };
     $candidate = new Config($scopeFixture, $om->get(Magento\Framework\Encryption\EncryptorInterface::class), $runtime);
-    $expected = 'https://hideguard.io';
+    $expected = ProtectionPolicy::DEFAULT_ENDPOINT_URL;
     checkPhaseTwo($candidate->policy($store)->endpointUrl === $expected, 'Policy mode endpoint mismatch');
     $candidateRules = $om->create(Hachitechs\Hideguard\Model\PageRules::class, ['config' => $candidate]);
     checkPhaseTwo($candidateRules->protects('/some/custom/form', $store), 'All-page protection must be fixed');

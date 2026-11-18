@@ -38,7 +38,7 @@ settlement and payment webhook processing are outside the module's scope.
 | Magento | Magento 2 with framework `^103.0.7` and the modules required by [composer.json](composer.json). |
 | PHP | `^8.2`, using a version supported by your Magento release. |
 | PHP extensions | cURL, PDO, PDO MySQL and Sodium. |
-| HideGuard library | `hachitechs/hideguard-php:^1.0`. |
+| HideGuard library | `hachitechs/hideguard-php:^1.0.3`. |
 | HideGuard credentials | Public Key, API Key and Signature Public Key for your site. |
 | Connectivity | Server and storefront browser access to HideGuard over HTTPS. |
 | Maintenance | Magento cron configured and running. |
@@ -64,7 +64,7 @@ Composer selects a compatible stable release using the Magento project's existin
 dependency constraints. No change to `minimum-stability` is required.
 
 Composer installs the module under `vendor/hachitechs/hideguard-m2` and
-automatically installs a compatible `hachitechs/hideguard-php:^1.0` release from
+automatically installs a compatible `hachitechs/hideguard-php:^1.0.3` release from
 [Packagist](https://packagist.org/packages/hachitechs/hideguard-php). No separate
 library installation is needed for this method.
 

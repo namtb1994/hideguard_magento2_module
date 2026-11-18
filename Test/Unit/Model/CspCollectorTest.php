@@ -24,7 +24,8 @@ class CspCollectorTest extends TestCase
     {
         $config = $this->createMock(Config::class);
         $config->method('policy')->willReturn(new ProtectionPolicy(
-            enabled: true, publicKey: 'site-key', endpointUrl: 'https://custom.hideguard.example:8443'
+            enabled: true, publicKey: 'site-key', signaturePublicKey: 'signature',
+            endpointUrl: 'https://custom.hideguard.example:8443'
         ));
         $existing = new FetchPolicy('img-src', false, ['https://images.example']);
         $policies = (new CspCollector($config, $this->appState()))->collect([$existing]);

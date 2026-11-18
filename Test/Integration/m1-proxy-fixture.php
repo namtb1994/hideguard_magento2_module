@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 // Controlled origin and activation driver for the real-proxy test. Never edits live configuration/security data.
 require dirname(__DIR__, 6) . '/app/bootstrap.php';
+require_once __DIR__ . '/FixtureVerdictVerifier.php';
 
 use Hachitechs\Hideguard\Model\Cache\{PolicyFiles, SnapshotReader, ManagedVcl, Activation};
 use Hachitechs\Hideguard\Model\{Config, PageRules};
@@ -14,7 +15,7 @@ use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Guard;
 use Hachitechs\HideguardPhp\Storage\PdoMySqlStorage;
 use Hachitechs\HideguardPhp\Configuration\RateLimits;
-use Hachitechs\HideguardPhp\Verification\DevelopmentVerifier;
+use Hachitechs\Hideguard\Test\Integration\FixtureVerdictVerifier;
 use Magento\Framework\App\{DeploymentConfig, Filesystem\DirectoryList};
 use Magento\Framework\HTTP\Client\{Curl, CurlFactory};
 use Magento\PageCache\Model\Cache\Server;
@@ -46,8 +47,8 @@ $storage = new PdoMySqlStorage($pdo, $tablePrefix);
 $clock = new class implements Psr\Clock\ClockInterface {
     public function now(): DateTimeImmutable { return new DateTimeImmutable('@1000'); }
 };
-$guard = Guard::factory()->withStorage($storage)->withClock($clock)->withVerifier(new DevelopmentVerifier())->make();
-$policy = new ProtectionPolicy(enabled: true, publicKey: 'fixture',
+$guard = Guard::factory()->withStorage($storage)->withClock($clock)->withVerifier(new FixtureVerdictVerifier())->make();
+$policy = new ProtectionPolicy(enabled: true, publicKey: 'fixture', signaturePublicKey: 'fixture-signature',
     limits: new RateLimits(scopeRequests: 100000, identityRequests: 100000));
 
 if (PHP_SAPI === 'cli') {

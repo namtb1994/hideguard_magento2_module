@@ -33,7 +33,7 @@ class ActionVerdictTest extends TestCase
         ?HttpTransport $transportOverride = null,
         ?Config $configOverride = null
     ): array {
-        $policy = new ProtectionPolicy(enabled: $enabled, publicKey: 'fixture-key');
+        $policy = new ProtectionPolicy(enabled: $enabled, publicKey: 'fixture-key', signaturePublicKey: 'fixture-signature');
         $config = $configOverride ?? $this->createMock(Config::class);
         if ($configOverride === null) {
             $config->method('policy')->willReturn($policy);
@@ -78,8 +78,8 @@ class ActionVerdictTest extends TestCase
             $count, $current, $storage, $guard];
     }
 
-    /** @dataProvider modeEndpoints */
-    public function testLegacyModesStillCallFreshBackendVerdictsAtTheLiveHost(string $mode, string $host): void
+    /** @dataProvider legacyModes */
+    public function testLegacyModesStillCallFreshBackendVerdictsAtTheLiveHost(string $mode): void
     {
         $scope = $this->createStub(\Magento\Framework\App\Config\ScopeConfigInterface::class);
         $values = ['general/enabled' => '1', 'general/environment' => $mode,
@@ -99,15 +99,14 @@ class ActionVerdictTest extends TestCase
         [$action, $count] = $this->fixture(configOverride: $config);
         foreach (['form', 'checkout', 'payment', 'order'] as $index => $operation) {
             $action->runBrowser(1, $operation, fn() => true);
-            self::assertSame($host, $count->baseUrl);
+            self::assertSame(ProtectionPolicy::DEFAULT_ENDPOINT_URL, $count->baseUrl);
             self::assertSame($index + 1, $count->requests);
         }
     }
 
-    public static function modeEndpoints(): array
+    public static function legacyModes(): array
     {
-        return [['development', 'https://hideguard.io'], ['staging', 'https://hideguard.io'],
-            ['production', 'https://hideguard.io']];
+        return [['development'], ['staging'], ['production']];
     }
 
     public function testNativeCartPredispatchAndServiceUseOneFreshApiCallPerInvocation(): void

@@ -19,11 +19,9 @@ class ValidateSettingsTest extends TestCase
 
     private function validator(array $groups, ?Config $config = null, ?array $parentSettings = null): array
     {
-        $settings = ['enabled' => false, 'environment' => Config::ENVIRONMENT, 'points' => ['all_pages'],
+        $settings = ['enabled' => false, 'points' => ['all_pages'],
             'pageRules' => [], 'blockDuration' => 3600, 'passDuration' => 0,
-            'keys' => [Config::ENVIRONMENT => [
-                'publicKey' => '', 'signaturePublicKey' => '', 'endpointUrl' => ProtectionPolicy::DEFAULT_ENDPOINT_URL,
-            ]]];
+            'keys' => ['publicKey' => '', 'signaturePublicKey' => '']];
         if ($config === null) {
             $deployment = $this->createStub(\Magento\Framework\App\DeploymentConfig::class);
             $deployment->method('get')->willReturnCallback(fn($key, $default = null) => $default);
@@ -51,8 +49,8 @@ class ValidateSettingsTest extends TestCase
             ->onlyMethods(['read', 'toPolicy'])->getMock();
         $config->expects(self::once())->method('toPolicy')->with(self::callback(
             fn(array $settings) => $settings['points'] === ['all_pages']
-                && $settings['environment'] === 'production'
-                && $settings['keys']['production']['endpointUrl'] === ProtectionPolicy::DEFAULT_ENDPOINT_URL
+                && !array_key_exists('environment', $settings)
+                && !array_key_exists('endpointUrl', $settings['keys'])
         ))->willReturn(new ProtectionPolicy());
         [$validator, $subject] = $this->validator(['general' => [
             'fields' => ['protected_points' => ['value' => []], 'environment' => ['value' => 'staging']],
@@ -114,9 +112,7 @@ class ValidateSettingsTest extends TestCase
             'enabled' => ['value' => '1'],
             'public_key' => ['inherit' => '1', 'value' => ''],
             'signature_public_key' => ['inherit' => '1', 'value' => 'invalid'],
-        ]]], parentSettings: ['keys' => ['production' => [
-            'publicKey' => 'parent-site-key', 'signaturePublicKey' => self::KEY,
-        ]]]);
+        ]]], parentSettings: ['keys' => ['publicKey' => 'parent-site-key', 'signaturePublicKey' => self::KEY]]);
         $subject->setWebsite(2);
         $validator->beforeSave($subject);
         self::assertTrue(true);

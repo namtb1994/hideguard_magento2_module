@@ -13,6 +13,7 @@ use Hachitechs\HideguardPhp\Guard;
 use Hachitechs\HideguardPhp\Access\BrowserState;
 use Hachitechs\HideguardPhp\Exceptions\FailureReason;
 use Hachitechs\HideguardPhp\Verification\VerdictPolicy;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\Hideguard\Model\StateRepository;
 use Hachitechs\Hideguard\Model\StoreLock;
 use Magento\Framework\App\Bootstrap;
@@ -96,9 +97,9 @@ foreach ($schema->table as $declaration) {
 $config = new class($om->get(\Magento\Framework\App\Config\ScopeConfigInterface::class), $om->get(\Magento\Framework\Encryption\EncryptorInterface::class), $om->get(\Hachitechs\Hideguard\Model\Config\RuntimeSettings::class)) extends Config {
     public bool $debug = true;
     public array $value = [
-        'enabled' => true, 'environment' => 'production', 'points' => ['all_pages', 'complete_order'],
+        'enabled' => true, 'points' => ['all_pages', 'complete_order'],
         'pageRules' => [], 'blockDuration' => 900, 'passDuration' => 0, 'keys' => [
-            'production' => ['publicKey' => 'production-key', 'signaturePublicKey' => 'response-key'],
+            'publicKey' => 'production-key', 'signaturePublicKey' => '',
         ],
     ];
     public function settings(?int $storeId = null): array { return $this->value; }
@@ -120,12 +121,9 @@ $signingSecret = sodium_crypto_sign_secretkey($signingPair);
 $signatureKey = "-----BEGIN PUBLIC KEY-----\n" . base64_encode(
     hex2bin('302a300506032b6570032100') . sodium_crypto_sign_publickey($signingPair)
 ) . "\n-----END PUBLIC KEY-----";
-foreach ([Config::ENVIRONMENT] as $environment) {
-    $config->value['keys'][$environment]['signaturePublicKey'] = $signatureKey;
-    $config->value['keys'][$environment]['endpointUrl'] = \Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::defaultEndpointUrl($environment);
-}
-$signed = function (string $verdict, string $visitor) use ($signingSecret, $config): array {
-    $payload = ['siteId' => 'site_local', 'environment' => $config->value['environment'],
+$config->value['keys']['signaturePublicKey'] = $signatureKey;
+$signed = function (string $verdict, string $visitor) use ($signingSecret): array {
+    $payload = ['siteId' => 'site_local', 'environment' => 'production',
         'requestId' => bin2hex(random_bytes(16)), 'visitorId' => $visitor,
         'verdict' => $verdict, 'score' => 35, 'reasons' => [['code' => 'fixture']]];
     $timestamp = time();
@@ -291,22 +289,17 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $config->value['passDuration'] = 0;
 
     $identity->customer = 0;
-    foreach ([Config::ENVIRONMENT] as $environment) {
-        $config->value['environment'] = $environment;
-        $identity->browser = 'signed-' . $environment;
-        checkAb(reportAb($access, $storeId, $signed('allow', 'signed-' . $environment))['status'] === 'allowed',
-            'Signed Allow is accepted in ' . $environment);
-        $tampered = $signed('allow', 'signed-' . $environment);
-        $tampered['score'] = 0;
-        try { reportAb($access, $storeId, $tampered); checkAb(false, 'Tampered signed verdict must fail'); }
-        catch (GuardException $error) { checkAb($error->reason === FailureReason::InvalidVerdict, 'Signature tampering rejected'); }
-        checkAb($access->pageStatus($storeId)['status'] === 'verification_failed', 'Signature rejection revokes the pass');
-        $challenge = reportAb($access, $storeId, $signed('challenge', 'signed-' . $environment));
-        checkAb($challenge['status'] === $challengeStatus
-            && $access->pageStatus($storeId)['status'] === $challengeStatus,
-            'Signed Challenge follows the configured verdict group in ' . $environment);
-    }
-    $config->value['environment'] = 'production';
+    $identity->browser = 'signed-browser';
+    checkAb(reportAb($access, $storeId, $signed('allow', 'signed-visitor'))['status'] === 'allowed',
+        'Signed Allow is accepted');
+    $tampered = $signed('allow', 'signed-visitor');
+    $tampered['score'] = 0;
+    try { reportAb($access, $storeId, $tampered); checkAb(false, 'Tampered signed verdict must fail'); }
+    catch (GuardException $error) { checkAb($error->reason === FailureReason::InvalidVerdict, 'Signature tampering rejected'); }
+    checkAb($access->pageStatus($storeId)['status'] === 'verification_failed', 'Signature rejection revokes the pass');
+    $challenge = reportAb($access, $storeId, $signed('challenge', 'signed-visitor'));
+    checkAb($challenge['status'] === $challengeStatus && $access->pageStatus($storeId)['status'] === $challengeStatus,
+        'Signed Challenge follows the configured verdict group');
     $identity->browser = 'rate-test';
     $identity->customer = 0;
     for ($i = 0; $i < 60; $i++) { $access->status($storeId); }
@@ -320,27 +313,18 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $instances[Access::class] = $access;
     $shared->setValue($om, $instances);
 
-    foreach ([Config::ENVIRONMENT] as $environment) {
-        $config->value['environment'] = $environment;
-        $policies = $om->get(\Magento\Csp\Api\PolicyCollectorInterface::class)->collect();
-        checkAb(in_array('base-uri', array_map(fn($policy) => $policy->getId(), $policies), true),
-            'Native Magento CSP collectors remain registered alongside the HideGuard collector');
-        $endpoint = $config->value['keys'][$environment]['endpointUrl'];
-        foreach (['script-src', 'connect-src'] as $directive) {
-            $matches = array_values(array_filter($policies, fn($policy) => $policy->getId() === $directive));
-            checkAb(count($matches) === 1 && in_array($endpoint, $matches[0]->getHostSources(), true),
-                'Native CSP allows the active ' . $environment . ' HideGuard origin for ' . $directive);
-            $hideguardOrigins = array_values(array_filter(
-                $matches[0]->getHostSources(),
-                static fn($origin) => str_contains($origin, 'hideguard.io')
-            ));
-            checkAb($hideguardOrigins === [$endpoint], 'Native CSP only allows the live HideGuard origin');
-        }
-        $browserConfig = $om->create(\Hachitechs\Hideguard\Block\Bootstrap::class)->getBrowserConfig();
-        checkAb($browserConfig['endpointUrl'] === $endpoint, 'Native browser config uses the active environment URL');
-        checkAb(!isset($browserConfig['signaturePublicKey']), 'Signature public key remains server-side');
+    $policies = $om->get(\Magento\Csp\Api\PolicyCollectorInterface::class)->collect();
+    checkAb(in_array('base-uri', array_map(fn($policy) => $policy->getId(), $policies), true),
+        'Native Magento CSP collectors remain registered alongside the HideGuard collector');
+    $endpoint = ProtectionPolicy::DEFAULT_ENDPOINT_URL;
+    foreach (['script-src', 'connect-src'] as $directive) {
+        $matches = array_values(array_filter($policies, fn($policy) => $policy->getId() === $directive));
+        checkAb(count($matches) === 1 && in_array($endpoint, $matches[0]->getHostSources(), true),
+            'Native CSP allows the library endpoint for ' . $directive);
     }
-    $config->value['environment'] = 'production';
+    $browserConfig = $om->create(\Hachitechs\Hideguard\Block\Bootstrap::class)->getBrowserConfig();
+    checkAb($browserConfig['endpointUrl'] === $endpoint, 'Native browser config uses the library endpoint');
+    checkAb(!isset($browserConfig['signaturePublicKey']), 'Signature public key remains server-side');
 
     // DI, real schema validation and rendered gate, with module enabled only in this process.
     foreach ([\Hachitechs\Hideguard\Plugin\PageAccess::class,
@@ -388,8 +372,8 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
             checkAb(($field[$scope] ?? null) === '1', 'Admin credential supports ' . $scope);
         }
     }
-    checkAb(str_contains((string)$structure->getElement(Config::SECTION . '/general/api_key')->getData()['comment'],
-        'https://hideguard.io/dashboard/'), 'API Key links to the HideGuard dashboard');
+    checkAb(str_contains((string)$structure->getElement(Config::SECTION . '/general/api_key')->getComment(),
+        rtrim(ProtectionPolicy::DEFAULT_ENDPOINT_URL, '/') . '/dashboard/'), 'API Key links to the HideGuard dashboard');
     $urn = $om->get(\Magento\Framework\Config\Dom\UrnResolver::class);
     libxml_set_external_entity_loader([$urn, 'registerEntityLoader']);
     foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__, 2))) as $file) {
@@ -529,7 +513,6 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     checkAb($pending === 'visible page beneath lock', 'Expired block allows pending page rendering rather than another 401');
 
     // Native HTTP controller must decode the complete signed SDK response and bind only a verified grant.
-    $config->value['environment'] = 'production';
     $identity->browser = 'signed-http';
     $checkoutFixture = $om->get(\Magento\Checkout\Model\Session::class);
     $checkoutFixture->replaceQuote((clone $quote)->setCustomerId(null));
@@ -661,7 +644,6 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
         ['config' => $config, 'identity' => $identity, 'storage' => $states, 'guard' => $apiGuard,
             'clients' => $clients, 'transports' => $transports]);
     $config->value['passDuration'] = 300;
-    $config->value['environment'] = 'production';
     $identity->browser = 'backend-action-visitor';
     $identity->customer = 0;
     reportAb($access, $storeId, $signed('allow', 'backend-visitor'));
@@ -672,7 +654,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $backendBlock = $action->checkBrowser($storeId);
     checkAb($backendBlock['status'] === 'blocked' && count($transport->requests) === 1,
         'A cached pass still calls VerdictClient and applies the unsigned backend Block through Guard');
-    checkAb($transport->requests[0] === [$config->value['keys']['production']['endpointUrl'] . '/api/v1/verdict',
+    checkAb($transport->requests[0] === [rtrim(ProtectionPolicy::DEFAULT_ENDPOINT_URL, '/') . '/api/v1/verdict',
         ['Accept' => 'application/json', 'Content-Type' => 'application/json', 'x-api-key' => 'fixture-server-key'],
         ['visitorId' => 'backend-visitor']], 'VerdictClient sends the server-owned visitor, active URL and secret key');
     checkAb($access->pageStatus($storeId)['blockedUntil'] === $backendBlock['blockedUntil'],

@@ -20,7 +20,7 @@ class AccessTest extends TestCase
 {
     public function testPageInspectionMapsGuestWithoutGrantingOrConsumingRate(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key');
+        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', signaturePublicKey: 'signature');
         $config = $this->createMock(Config::class);
         $config->method('policy')->with(1)->willReturn($policy);
         $identity = $this->createMock(BrowserIdentity::class);
@@ -39,7 +39,7 @@ class AccessTest extends TestCase
 
     public function testBackendQuoteOwnerComesFromTrustedQuoteAndDoesNotRequireBrowserSession(): void
     {
-        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', accessPoints: ['complete_order']);
+        $policy = new ProtectionPolicy(enabled: true, publicKey: 'key', signaturePublicKey: 'signature', accessPoints: ['complete_order']);
         $config = $this->getMockBuilder(Config::class)->disableOriginalConstructor()->onlyMethods(['policy'])->getMock();
         $config->expects(self::once())->method('policy')->with(2)->willReturn($policy);
         $identity = $this->createMock(BrowserIdentity::class);
@@ -55,15 +55,14 @@ class AccessTest extends TestCase
             ->assertQuote($quote, 'complete_order');
     }
 
-    public function testAdminPresetsAndXmlDefaultMatchCore(): void
+    public function testMagentoDefaultsToAlwaysAndAdminPresetsMatchCore(): void
     {
         $xml = simplexml_load_file(dirname(__DIR__, 3) . '/etc/config.xml');
-        self::assertSame(ProtectionPolicy::DEFAULT_PASS_DURATION,
+        self::assertSame(0,
             (int)$xml->default->hachitech_hideguard->general->pass_duration);
         foreach ([
             \Hachitechs\Hideguard\Model\Config\Source\PassDuration::class => ProtectionPolicy::PASS_DURATIONS,
             \Hachitechs\Hideguard\Model\Config\Source\Duration::class => ProtectionPolicy::BLOCK_DURATIONS,
-            \Hachitechs\Hideguard\Model\Config\Source\Environment::class => ProtectionPolicy::ENVIRONMENTS,
         ] as $source => $expected) {
             self::assertSame($expected, array_column((new $source())->toOptionArray(), 'value'));
         }

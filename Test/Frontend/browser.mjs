@@ -8,7 +8,7 @@ const placeOrderSource = readFileSync(new URL('../../view/frontend/web/js/place-
 
 export function browser({preflight = {status: 'verification_required'}, report, points = ['all_pages'],
   page = 'gate', pageProtected = true, initialState = 'pending', responseCode = 200,
-  endpointUrl, fetchResponse} = {}) {
+  endpointUrl = 'https://verification.example', fetchResponse} = {}) {
   const listeners = new Map(), elements = new Map(), scripts = [], requests = [], timers = [], redirects = [];
   const mutations = [], heading = {}, message = {}, ajaxHandlers = [];
   function element(id) {

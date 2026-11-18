@@ -8,7 +8,7 @@ if (!process.argv[2]) throw new Error('Usage: node check-node.mjs <Node package 
 const {verifyCollect} = await import(pathToFileURL(resolve(process.argv[2])).href);
 const vectors = JSON.parse(readFileSync(new URL('./collect-vectors.json', import.meta.url), 'utf8'));
 for (const item of vectors.cases) {
-  const policy = {enabled: true, environment: item.environment || 'production', endpointUrl: 'https://hideguard.io',
+  const policy = {enabled: true, environment: item.environment || 'production', endpointUrl: 'https://verification.example',
     publicKey: 'fixture', signaturePublicKey: item.publicKey || vectors.publicKey, revision: 'fixture',
     blockEpoch: 'fixture', recheckSeconds: 300, blockSeconds: 900, verificationSeconds: 35};
   let accepted = false;

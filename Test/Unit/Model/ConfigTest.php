@@ -6,6 +6,9 @@ namespace Hachitechs\Hideguard\Test\Unit\Model;
 
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\Hideguard\Model\Config;
+use Hachitechs\Hideguard\Model\Config\Comment\ApiKey;
+use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
+use Magento\Framework\Escaper;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -71,8 +74,7 @@ class ConfigTest extends TestCase
 
         $policy = ($this->config($scope))->policy(7);
 
-        self::assertSame('production', $policy->environment);
-        self::assertSame('https://hideguard.io', $policy->endpointUrl);
+        self::assertSame(ProtectionPolicy::DEFAULT_ENDPOINT_URL, $policy->endpointUrl);
         self::assertSame(Config::ACCESS_POINTS, $policy->accessPoints);
         self::assertSame('sdk-production', $policy->publicKey);
         self::assertSame('signature-production', $policy->signaturePublicKey);
@@ -104,9 +106,9 @@ class ConfigTest extends TestCase
         self::assertSame(['contact', 'Campaign/*'], $settings['pageRules']);
         self::assertSame(Config::ACCESS_POINTS, $settings['points']);
         $settings['points'] = [];
-        $settings['keys']['production']['endpointUrl'] = 'https://forged.example';
+        $settings['keys']['endpointUrl'] = 'https://forged.example';
         $policy = $config->toPolicy($settings);
-        self::assertSame('https://hideguard.io', $policy->endpointUrl);
+        self::assertSame(ProtectionPolicy::DEFAULT_ENDPOINT_URL, $policy->endpointUrl);
         self::assertSame(Config::ACCESS_POINTS, $policy->accessPoints);
         foreach (['cart', 'checkout', 'payment', 'complete_order', 'login', 'form.submit'] as $action) {
             self::assertTrue($policy->protects($action));
@@ -119,10 +121,9 @@ class ConfigTest extends TestCase
         $config = $this->config($this->createStub(ScopeConfigInterface::class));
         $settings = $config->settings(7);
         $settings['environment'] = $environment;
-        $settings['keys']['production']['endpointUrl'] = 'https://forged.example';
+        $settings['keys']['endpointUrl'] = 'https://forged.example';
         $policy = $config->toPolicy($settings);
-        self::assertSame('production', $policy->environment);
-        self::assertSame('https://hideguard.io', $policy->endpointUrl);
+        self::assertSame(ProtectionPolicy::DEFAULT_ENDPOINT_URL, $policy->endpointUrl);
     }
 
     public function testAdminCredentialsPreservePathsEncryptionAndDashboardAccess(): void
@@ -140,8 +141,17 @@ class ConfigTest extends TestCase
         $apiKey = $group->xpath('field[@id="api_key"]')[0];
         self::assertSame('obscure', (string)$apiKey['type']);
         self::assertSame(\Magento\Config\Model\Config\Backend\Encrypted::class, (string)$apiKey->backend_model);
-        self::assertStringContainsString('href="https://hideguard.io/dashboard/"', (string)$apiKey->comment);
-        self::assertStringContainsString('rel="noopener noreferrer"', (string)$apiKey->comment);
+        self::assertSame(ApiKey::class, (string)$apiKey->comment['model']);
+        $dashboard = rtrim(ProtectionPolicy::DEFAULT_ENDPOINT_URL, '/') . '/dashboard/';
+        $escaper = $this->createMock(Escaper::class);
+        $escaper->expects(self::once())->method('escapeUrl')->with($dashboard)->willReturn($dashboard);
+        $comment = (new ApiKey($escaper))->getCommentText('private-fixture');
+        self::assertStringContainsString(
+            'href="' . $dashboard . '"',
+            $comment
+        );
+        self::assertStringContainsString('rel="noopener noreferrer"', $comment);
+        self::assertStringNotContainsString('private-fixture', $comment);
     }
 
     private function config(ScopeConfigInterface $scope): Config

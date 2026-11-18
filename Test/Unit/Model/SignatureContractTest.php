@@ -18,7 +18,7 @@ class SignatureContractTest extends TestCase
     {
         $clock = $this->createMock(ClockInterface::class);
         $clock->method('now')->willReturn(new \DateTimeImmutable('@' . $item['now']));
-        $policy = new ProtectionPolicy(enabled: true, environment: $item['environment'] ?? 'production',
+        $policy = new ProtectionPolicy(enabled: true,
             publicKey: 'fixture', signaturePublicKey: $item['publicKey'] ?? $publicKey, passDuration: 300,
             blockDuration: 900);
         if (!$item['accepted']) {

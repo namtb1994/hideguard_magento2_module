@@ -19,9 +19,9 @@
                     <comment>Public HideGuard SDK site key used by the storefront.</comment>
                     <config_path>hachitech_hideguard/production/public_key</config_path>
                 </field>
-                <field id="api_key" translate="label comment" type="obscure" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="api_key" translate="label" type="obscure" sortOrder="25" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API Key</label>
-                    <comment><![CDATA[Get your API key from the <a href="https://hideguard.io/dashboard/" target="_blank" rel="noopener noreferrer">HideGuard Dashboard</a>. Stored encrypted and used only by the server.]]></comment>
+                    <comment model="Hachitechs\Hideguard\Model\Config\Comment\ApiKey"/>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     <config_path>hachitech_hideguard/production/api_key</config_path>
                 </field>
