@@ -7,16 +7,16 @@ $state = $block->getData('initial_state') ?: 'pending';
     default => [__('Verifying access'), __('Please wait for verification before continuing.')],
 };
 ?>
-<section id="hachitech-ab-gate"
-         class="hachitech-ab-gate"
+<section id="hachitech-hideguard-gate"
+         class="hachitech-hideguard-gate"
          data-page="<?= $escaper->escapeHtmlAttr($block->getData('gate_page') ? 'gate' : '') ?>"
          data-state="<?= $escaper->escapeHtmlAttr($state) ?>"
          role="dialog"
          aria-modal="true"
-         aria-labelledby="hachitech-ab-heading"
-         aria-describedby="hachitech-ab-description">
-    <div class="hachitech-ab-message">
-        <div class="hachitech-ab-icon" aria-hidden="true">
+         aria-labelledby="hachitech-hideguard-heading"
+         aria-describedby="hachitech-hideguard-description">
+    <div class="hachitech-hideguard-message">
+        <div class="hachitech-hideguard-icon" aria-hidden="true">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
                 <path d="M12 3 4 6v5c0 5.2 3.4 8.6 8 10 4.6-1.4 8-4.8 8-10V6l-8-3Z"/>
@@ -24,22 +24,22 @@ $state = $block->getData('initial_state') ?: 'pending';
                 <path d="M10 10V8a2 2 0 0 1 4 0v2"/>
             </svg>
         </div>
-        <span class="hachitech-ab-eyebrow"><?= $escaper->escapeHtml(__('Protected access')) ?></span>
-        <h2 id="hachitech-ab-heading"><?= $escaper->escapeHtml($heading) ?></h2>
-        <p id="hachitech-ab-description" role="status" aria-live="polite">
+        <span class="hachitech-hideguard-eyebrow"><?= $escaper->escapeHtml(__('Protected access')) ?></span>
+        <h2 id="hachitech-hideguard-heading"><?= $escaper->escapeHtml($heading) ?></h2>
+        <p id="hachitech-hideguard-description" role="status" aria-live="polite">
             <?= $escaper->escapeHtml($message) ?>
         </p>
-        <div class="hachitech-ab-guidance">
-            <span class="hachitech-ab-guidance-title">
+        <div class="hachitech-hideguard-guidance">
+            <span class="hachitech-hideguard-guidance-title">
                 <?= $escaper->escapeHtml(__('What happens next')) ?>
             </span>
-            <span class="hachitech-ab-guidance-text">
+            <span class="hachitech-hideguard-guidance-text">
                 <?= $escaper->escapeHtml(
                     __('This page will check your access again automatically when the restriction ends.')
                 ) ?>
             </span>
         </div>
-        <button type="button" class="hachitech-ab-retry" data-action="retry">
+        <button type="button" class="hachitech-hideguard-retry" data-action="retry">
             <?= $escaper->escapeHtml(__('Try again')) ?>
         </button>
     </div>

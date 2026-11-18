@@ -84,7 +84,7 @@ class BootstrapTest extends TestCase
         $pageConfig->method('getElementAttribute')->willReturn(null);
         $pageConfig->expects(self::exactly(2))->method('setElementAttribute')->withConsecutive(
             [PageConfig::ELEMENT_TYPE_BODY, 'inert', ''],
-            [PageConfig::ELEMENT_TYPE_BODY, 'data-hachitech-ab-inert', '']
+            [PageConfig::ELEMENT_TYPE_BODY, 'data-hachitech-hideguard-inert', '']
         );
         $block = $this->block($access, $pageConfig);
         (new \ReflectionMethod(Bootstrap::class, '_prepareLayout'))->invoke($block);
@@ -116,7 +116,7 @@ class BootstrapTest extends TestCase
         bool $expected
     ): void {
         $access = $this->createMock(Access::class);
-        if (!$enabled || (!$protected && $action !== 'antidetectbrowser_gate_index')) {
+        if (!$enabled || (!$protected && $action !== 'hideguard_gate_index')) {
             $access->expects(self::never())->method('pageStatus');
         } else {
             $access->method('pageStatus')->willReturn(['status' => 'verification_required']);
@@ -136,7 +136,7 @@ class BootstrapTest extends TestCase
             [['cart'], false, 'cms_index_index', true, true],
             [['checkout'], false, 'cms_index_index', true, true],
             [['complete_order'], false, 'cms_index_index', true, true],
-            [[], false, 'antidetectbrowser_gate_index', true, true],
+            [[], false, 'hideguard_gate_index', true, true],
             [['product'], true, 'catalog_product_view', false, false],
         ];
     }
@@ -179,7 +179,7 @@ class BootstrapTest extends TestCase
             ['/products?sort=name', '/products?sort=name'],
             ['//external.test/', 'https://store.test/'],
             ['/\\external.test/', 'https://store.test/'],
-            ['/antidetectbrowser/Gate/Index', 'https://store.test/'],
+            ['/hideguard/Gate/Index', 'https://store.test/'],
             ["/bad\npath", 'https://store.test/'],
         ];
     }

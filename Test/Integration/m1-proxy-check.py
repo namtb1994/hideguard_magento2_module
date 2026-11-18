@@ -56,7 +56,7 @@ for path, host, extra in [('/en/%64iamond.html', 'shop.example', None),
     ('/EN/about-us', 'shop.example', None), ('/elsewhere', 'shop.example', None),
     ('/en/about-us', 'unknown.example', None), ('/en/about-us', 'shop.example', {'Store': 'fr'}),
     ('/en/about-us', 'shop.example', {'X-Original-URL': '/en/diamond.html'}),
-    ('/en/antidetectbrowser/gate/index', 'shop.example', None)]:
+    ('/en/hideguard/gate/index', 'shop.example', None)]:
     assert_pass(path, host, extra)
 print('PASS public MISS→HIT: one backend request; protected A/B, token isolation, hosts/base paths and ambiguous requests stay PASS.')
 a = request('/en/offer.html'); b = request('/en/offer.html')

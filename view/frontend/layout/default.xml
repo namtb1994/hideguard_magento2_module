@@ -8,7 +8,7 @@
         </referenceBlock>
         <referenceContainer name="after.body.start">
             <block class="Hachitechs\Hideguard\Block\Bootstrap"
-                   name="hachitech.antidetect.bootstrap"
+                   name="hachitech.hideguard.bootstrap"
                    template="Hachitechs_Hideguard::bootstrap.phtml"
                    before="-"/>
         </referenceContainer>

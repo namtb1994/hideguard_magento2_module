@@ -14,7 +14,7 @@ use Magento\Store\Model\ScopeInterface;
 
 class Config
 {
-    public const SECTION = 'hachitech_antidetectbrowser';
+    public const SECTION = 'hachitech_hideguard';
     public const ENVIRONMENT = 'production';
     public const ACCESS_POINTS = ['all_pages', 'complete_order'];
 

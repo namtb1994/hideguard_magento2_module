@@ -37,9 +37,9 @@ class PageAccessTest extends TestCase
         $store->method('getId')->willReturn(1);
         $stores->method('getStore')->willReturn($store);
         $url = $this->createMock(UrlInterface::class);
-        $url->method('getUrl')->with('antidetectbrowser/gate/index', [
+        $url->method('getUrl')->with('hideguard/gate/index', [
             '_secure' => true, '_query' => ['return' => base64_encode('/private-page?x=1')] + (in_array($status, ['error', 'verification_failed'], true) ? ['failed' => '1'] : []),
-        ])->willReturn('https://store.test/antidetectbrowser/gate/index');
+        ])->willReturn('https://store.test/hideguard/gate/index');
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($failure ? self::once() : self::never())->method('error');
         return new PageAccess($rules, $access, $stores, $response,
@@ -62,7 +62,7 @@ class PageAccessTest extends TestCase
     {
         $response = $this->createMock(Http::class);
         $response->method('setHeader')->willReturnSelf();
-        $response->expects(self::once())->method('setRedirect')->with('https://store.test/antidetectbrowser/gate/index', 302)->willReturnSelf();
+        $response->expects(self::once())->method('setRedirect')->with('https://store.test/hideguard/gate/index', 302)->willReturnSelf();
         $response->expects(self::once())->method('setBody')->with('')->willReturnSelf();
         $called = false;
         $result = $this->plugin($response, $status, $failure)->aroundDispatch(
@@ -92,7 +92,7 @@ class PageAccessTest extends TestCase
         $response = $this->createMock(Http::class);
         $response->method('setHeader')->willReturnSelf();
         $response->expects(self::once())->method('setRedirect')
-            ->with('https://store.test/antidetectbrowser/gate/index', 302)->willReturnSelf();
+            ->with('https://store.test/hideguard/gate/index', 302)->willReturnSelf();
         $response->expects(self::once())->method('setBody')->with('')->willReturnSelf();
         self::assertSame($response, $this->plugin($response, 'blocked')->aroundDispatch(
             $this->createMock(FrontControllerInterface::class),

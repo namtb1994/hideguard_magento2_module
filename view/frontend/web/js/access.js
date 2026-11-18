@@ -93,7 +93,7 @@ define(['jquery', 'mage/cookies', 'mage/translate', './runtime', 'domReady!'], f
                     return fetch.apply(this, arguments).then(function (response) {
                         if (config.page !== 'gate' && url.origin === new URL(window.location.href).origin &&
                             response.headers &&
-                            response.headers.get('X-Hachitech-Antidetect') === 'denied') {
+                            response.headers.get('X-Hachitech-HideGuard') === 'denied') {
                             return response.clone().json().catch(function () {
                                 return {};
                             }).then(function (data) {
@@ -118,7 +118,7 @@ define(['jquery', 'mage/cookies', 'mage/translate', './runtime', 'domReady!'], f
                 // The standalone gate's runtime owns its blocked state, expiry and retry controls.
                 if (config.page !== 'gate' && url.origin === new URL(window.location.href).origin) {
                     xhr.always(function () {
-                        if (xhr.getResponseHeader('X-Hachitech-Antidetect') === 'denied') {
+                        if (xhr.getResponseHeader('X-Hachitech-HideGuard') === 'denied') {
                             deny(xhr.status, xhr.responseJSON, pendingPageCheck, url);
                         }
                     });

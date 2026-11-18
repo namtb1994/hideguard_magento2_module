@@ -17,7 +17,7 @@ test('gate is locked synchronously before the first network response', async () 
   assert.equal(app.bodyLockedBeforeInit, true);
   assert.equal(app.lockedBeforeInit, true);
   assert.equal(app.document.body.hasAttribute('inert'), false);
-  assert.equal(app.document.body.hasAttribute('data-hachitech-ab-inert'), false);
+  assert.equal(app.document.body.hasAttribute('data-hachitech-hideguard-inert'), false);
   assert.equal(app.gate.getAttribute('data-state'), 'pending');
   assert.equal(app.content.hasAttribute('inert'), true);
   assert.equal(app.heading.textContent, 'Verifying access');

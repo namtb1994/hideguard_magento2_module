@@ -32,10 +32,10 @@ class PageRulesTest extends TestCase
     public function testOnlyExactVerificationRoutesAreExempt(): void
     {
         $rules = $this->rules(['all_pages']);
-        foreach (['/antidetectbrowser/gate/index', '/antidetectbrowser/access/check', '/antidetectbrowser/access/verdict'] as $path) {
+        foreach (['/hideguard/gate/index', '/hideguard/access/check', '/hideguard/access/verdict'] as $path) {
             self::assertFalse($rules->protects($path, 1));
         }
-        self::assertTrue($rules->protects('/antidetectbrowser/arbitrary/page', 1));
+        self::assertTrue($rules->protects('/hideguard/arbitrary/page', 1));
     }
 
     public function testProductSeoRewritesAreProtected(): void
@@ -99,11 +99,11 @@ class PageRulesTest extends TestCase
     public function testVerificationRouteExemptionsFollowMagentoActionCase(): void
     {
         $rules = $this->rules(['all_pages']);
-        self::assertFalse($rules->protects('/antidetectbrowser/Access/Verdict', 1));
-        self::assertFalse($rules->protects('/antidetectbrowser/Gate/Index', 1));
-        self::assertFalse($rules->protects('/antidetectbrowser/Gate', 1));
-        self::assertTrue($rules->protects('/antidetectbrowser/Gate/Unknown', 1));
-        self::assertTrue($rules->protects('/antidetectbrowser/Access/Unknown', 1));
+        self::assertFalse($rules->protects('/hideguard/Access/Verdict', 1));
+        self::assertFalse($rules->protects('/hideguard/Gate/Index', 1));
+        self::assertFalse($rules->protects('/hideguard/Gate', 1));
+        self::assertTrue($rules->protects('/hideguard/Gate/Unknown', 1));
+        self::assertTrue($rules->protects('/hideguard/Access/Unknown', 1));
     }
 
     public function testRouteCaseNormalizationPreservesCustomPathAndRewriteLookupCase(): void

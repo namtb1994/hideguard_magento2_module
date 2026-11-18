@@ -1,5 +1,5 @@
 {
-    "hachitech_antidetect_session": {
+    "hachitech_hideguard_session": {
         "column": {
             "session_hash": true,
             "store_id": true,
@@ -15,29 +15,29 @@
             "verification_until": true
         },
         "index": {
-            "HACHITECH_AB_QUOTE": true,
-            "HACHITECH_AB_VISITOR": true,
-            "HACHITECH_AB_CUSTOMER": true,
-            "HACHITECH_AB_LAST_SEEN": true
+            "HACHITECH_HIDEGUARD_QUOTE": true,
+            "HACHITECH_HIDEGUARD_VISITOR": true,
+            "HACHITECH_HIDEGUARD_CUSTOMER": true,
+            "HACHITECH_HIDEGUARD_LAST_SEEN": true
         },
         "constraint": {
             "PRIMARY": true
         }
     },
-    "hachitech_antidetect_block": {
+    "hachitech_hideguard_block": {
         "column": {
             "identity_hash": true,
             "store_id": true,
             "blocked_until": true
         },
         "index": {
-            "HACHITECH_AB_BLOCK_EXPIRY": true
+            "HACHITECH_HIDEGUARD_BLOCK_EXPIRY": true
         },
         "constraint": {
             "PRIMARY": true
         }
     },
-    "hachitech_antidetect_rate": {
+    "hachitech_hideguard_rate": {
         "column": {
             "bucket_hash": true,
             "store_id": true,
@@ -45,13 +45,13 @@
             "expires_at": true
         },
         "index": {
-            "HACHITECH_AB_RATE_EXPIRY": true
+            "HACHITECH_HIDEGUARD_RATE_EXPIRY": true
         },
         "constraint": {
             "PRIMARY": true
         }
     },
-    "hachitech_antidetect_control": {
+    "hachitech_hideguard_control": {
         "column": {
             "store_id": true,
             "name": true,
@@ -62,7 +62,7 @@
             "PRIMARY": true
         }
     },
-    "hachitech_antidetect_circuit": {
+    "hachitech_hideguard_circuit": {
         "column": {
             "circuit_key": true,
             "failures": true,

@@ -30,9 +30,9 @@ class StoreLock implements PartitionedAtomicMutationContract, ResetAfterRequestI
             $pdo = $this->resource->getConnection()->getConnection();
             $control = new MySqlControl(
                 $pdo,
-                $this->resource->getTableName('hachitech_antidetect_control'),
+                $this->resource->getTableName('hachitech_hideguard_control'),
                 'store_id',
-                $this->resource->getTableName('hachitech_antidetect_session')
+                $this->resource->getTableName('hachitech_hideguard_session')
             );
             $this->coordinator = new MySqlCoordinator(
                 $pdo,

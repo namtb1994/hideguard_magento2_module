@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="default">
-        <job name="hachitech_antidetect_cleanup" instance="Hachitechs\Hideguard\Model\Access" method="cleanup">
+        <job name="hachitech_hideguard_cleanup" instance="Hachitechs\Hideguard\Model\Access" method="cleanup">
             <schedule>17 * * * *</schedule>
         </job>
     </group>

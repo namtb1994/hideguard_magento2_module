@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
-        <hachitech_antidetectbrowser>
+        <hachitech_hideguard>
             <general>
                 <enabled>0</enabled>
                 <block_duration>900</block_duration>
                 <pass_duration>0</pass_duration>
                 <debug>0</debug>
             </general>
-        </hachitech_antidetectbrowser>
+        </hachitech_hideguard>
     </default>
 </config>

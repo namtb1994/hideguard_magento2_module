@@ -30,7 +30,7 @@ class PageRules
     public function isGatePath(string $path): bool
     {
         return (bool)preg_match(
-            '#^antidetectbrowser/(?:access/(?:check|verdict|fail)(?:/|$)|gate(?:/index(?:/|$)|$))#i',
+            '#^hideguard/(?:access/(?:check|verdict|fail)(?:/|$)|gate(?:/index(?:/|$)|$))#i',
             $this->paths->normalize($path)
         );
     }

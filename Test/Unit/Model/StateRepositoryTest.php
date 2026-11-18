@@ -24,7 +24,7 @@ class StateRepositoryTest extends TestCase
         );
         $resource = $this->createMock(ResourceConnection::class);
         $resource->method('getConnection')->willReturn($connection);
-        $resource->method('getTableName')->with('hachitech_antidetect_session')->willReturn('test_session');
+        $resource->method('getTableName')->with('hachitech_hideguard_session')->willReturn('test_session');
         $storage = new StateRepository($resource);
         match ($kind) {
             'scope' => $storage->revokeScope('1'),

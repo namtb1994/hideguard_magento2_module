@@ -22,8 +22,8 @@ $om->get(Magento\Framework\App\State::class)->setAreaCode('frontend');
 $om->configure($om->get(Magento\Framework\ObjectManager\ConfigLoaderInterface::class)->load('frontend'));
 $plugins = $om->get(Magento\Framework\Interception\PluginListInterface::class);
 foreach ([
-    [Magento\Quote\Model\Quote::class, 'addProduct', 'hachitech_antidetect_cart', Hachitechs\Hideguard\Plugin\QuoteAccess::class],
-    [Magento\Quote\Model\QuoteManagement::class, 'submit', 'hachitech_antidetect_order', Hachitechs\Hideguard\Plugin\OrderAccess::class],
+    [Magento\Quote\Model\Quote::class, 'addProduct', 'hachitech_hideguard_cart', Hachitechs\Hideguard\Plugin\QuoteAccess::class],
+    [Magento\Quote\Model\QuoteManagement::class, 'submit', 'hachitech_hideguard_order', Hachitechs\Hideguard\Plugin\OrderAccess::class],
     [Magento\Customer\Model\AccountManagement::class, 'authenticate', 'hachitechs_hideguard_account', Hachitechs\Hideguard\Plugin\AuthAccess::class],
     [Magento\Customer\Model\AccountManagement::class, 'createAccount', 'hachitechs_hideguard_account', Hachitechs\Hideguard\Plugin\AuthAccess::class],
 ] as [$type, $method, $name, $expected]) {
@@ -111,7 +111,7 @@ foreach (['development', 'staging', 'production'] as $mode) {
     checkPhaseTwo($candidate->policy($store)->endpointUrl === $expected, 'Policy mode endpoint mismatch');
     $candidateRules = $om->create(Hachitechs\Hideguard\Model\PageRules::class, ['config' => $candidate]);
     checkPhaseTwo($candidateRules->protects('/some/custom/form', $store), 'All-page protection must be fixed');
-    checkPhaseTwo(!$candidateRules->protects('/antidetectbrowser/access/check', $store), 'Gate exemption lost');
+    checkPhaseTwo(!$candidateRules->protects('/hideguard/access/check', $store), 'Gate exemption lost');
     $fakeAccess = new class extends Hachitechs\Hideguard\Model\Access {
         public function __construct() {}
         public function pageStatus(int $storeId): array { return ['status' => 'allowed']; }

@@ -77,7 +77,7 @@ class VarnishAccessTest extends TestCase
             ['shop.example', '/en/quote"test', true],
             ['shop.example', '/en/café', true],
             ['shop.example', '/en/caf%C3%A9', true],
-            ['shop.example', '/en/antidetectbrowser/access/check', true],
+            ['shop.example', '/en/hideguard/access/check', true],
             ['shop.example', '/en/index.php/private/report', true],
             ['shop.example', '/en//private/report', true],
             ['shop.example', '/en/public', false],

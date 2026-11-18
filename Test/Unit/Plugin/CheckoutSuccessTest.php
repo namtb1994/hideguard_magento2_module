@@ -79,9 +79,9 @@ class CheckoutSuccessTest extends TestCase
     private function plugin(Access $access, Http $response, ?SuccessValidator $validator = null): PageAccess
     {
         $url = $this->createMock(UrlInterface::class);
-        $url->expects(self::once())->method('getUrl')->with('antidetectbrowser/gate/index', [
+        $url->expects(self::once())->method('getUrl')->with('hideguard/gate/index', [
             '_secure' => true, '_query' => ['return' => base64_encode(self::PATH)],
-        ])->willReturn('/antidetectbrowser/gate/index/?return=' . base64_encode(self::PATH));
+        ])->willReturn('/hideguard/gate/index/?return=' . base64_encode(self::PATH));
         return new PageAccess($this->rules(), $access, $this->stores(), $response,
             new DeniedResponse($response, $url), $this->createStub(LoggerInterface::class),
             $validator ?? $this->createStub(SuccessValidator::class));
@@ -128,7 +128,7 @@ class CheckoutSuccessTest extends TestCase
         $response->method('setHeader')->willReturnSelf();
         $response->method('setBody')->willReturnSelf();
         $response->expects(self::once())->method('setRedirect')->with(
-            '/antidetectbrowser/gate/index/?return=' . base64_encode(self::PATH), 302
+            '/hideguard/gate/index/?return=' . base64_encode(self::PATH), 302
         )->willReturnSelf();
         $plugin = $this->plugin($access, $response, $validator);
         $front = $this->createStub(FrontControllerInterface::class);

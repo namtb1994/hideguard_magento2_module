@@ -1,22 +1,22 @@
-@hachitech-ab__text-color: #182830;
-@hachitech-ab__muted-color: #63727a;
-@hachitech-ab__border-color: #e5eaed;
-@hachitech-ab__accent-color: #aa562e;
-@hachitech-ab__icon-background-color: #fff1e8;
-@hachitech-ab__note-background-color: #f6f8fa;
-@hachitech-ab__shadow-color: rgba(24, 40, 48, .08);
-@hachitech-ab__background-color: #fff;
+@hachitech-hideguard__text-color: #182830;
+@hachitech-hideguard__muted-color: #63727a;
+@hachitech-hideguard__border-color: #e5eaed;
+@hachitech-hideguard__accent-color: #aa562e;
+@hachitech-hideguard__icon-background-color: #fff1e8;
+@hachitech-hideguard__note-background-color: #f6f8fa;
+@hachitech-hideguard__shadow-color: rgba(24, 40, 48, .08);
+@hachitech-hideguard__background-color: #fff;
 
-html.hachitech-ab-locked body,
-body[data-hachitech-ab-inert] {
+html.hachitech-hideguard-locked body,
+body[data-hachitech-hideguard-inert] {
     overflow: hidden;
 }
 
-.hachitech-ab-gate {
+.hachitech-hideguard-gate {
     align-items: center;
     background: transparent;
     box-sizing: border-box;
-    color: @hachitech-ab__text-color;
+    color: @hachitech-hideguard__text-color;
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -37,14 +37,14 @@ body[data-hachitech-ab-inert] {
 
     &[data-state='blocked'],
     &[data-page='gate'] {
-        background: @hachitech-ab__background-color;
+        background: @hachitech-hideguard__background-color;
     }
 
-    .hachitech-ab-message {
-        background: @hachitech-ab__background-color;
-        border: 1px solid @hachitech-ab__border-color;
+    .hachitech-hideguard-message {
+        background: @hachitech-hideguard__background-color;
+        border: 1px solid @hachitech-hideguard__border-color;
         border-radius: 24px;
-        box-shadow: 0 20px 64px @hachitech-ab__shadow-color;
+        box-shadow: 0 20px 64px @hachitech-hideguard__shadow-color;
         box-sizing: border-box;
         flex-shrink: 0;
         margin: auto 0;
@@ -53,11 +53,11 @@ body[data-hachitech-ab-inert] {
         width: 100%;
     }
 
-    .hachitech-ab-icon {
+    .hachitech-hideguard-icon {
         align-items: center;
-        background: @hachitech-ab__icon-background-color;
+        background: @hachitech-hideguard__icon-background-color;
         border-radius: 20px;
-        color: @hachitech-ab__accent-color;
+        color: @hachitech-hideguard__accent-color;
         display: flex;
         height: 72px;
         justify-content: center;
@@ -65,8 +65,8 @@ body[data-hachitech-ab-inert] {
         width: 72px;
     }
 
-    .hachitech-ab-eyebrow {
-        color: @hachitech-ab__muted-color;
+    .hachitech-hideguard-eyebrow {
+        color: @hachitech-hideguard__muted-color;
         display: block;
         font-size: 11px;
         font-weight: 600;
@@ -76,7 +76,7 @@ body[data-hachitech-ab-inert] {
     }
 
     h2 {
-        color: @hachitech-ab__text-color;
+        color: @hachitech-hideguard__text-color;
         font-size: 30px;
         font-weight: 600;
         letter-spacing: -.025em;
@@ -85,16 +85,16 @@ body[data-hachitech-ab-inert] {
     }
 
     p {
-        color: @hachitech-ab__muted-color;
+        color: @hachitech-hideguard__muted-color;
         font-size: 16px;
         line-height: 1.7;
         margin: 0;
     }
 
-    .hachitech-ab-guidance {
-        background: @hachitech-ab__note-background-color;
+    .hachitech-hideguard-guidance {
+        background: @hachitech-hideguard__note-background-color;
         border-radius: 12px;
-        color: @hachitech-ab__muted-color;
+        color: @hachitech-hideguard__muted-color;
         display: none;
         font-size: 13px;
         line-height: 1.7;
@@ -102,28 +102,28 @@ body[data-hachitech-ab-inert] {
         padding: 20px 24px;
     }
 
-    .hachitech-ab-guidance-title {
-        color: @hachitech-ab__text-color;
+    .hachitech-hideguard-guidance-title {
+        color: @hachitech-hideguard__text-color;
         display: block;
         font-size: 12px;
         font-weight: 600;
         margin-bottom: 4px;
     }
 
-    &[data-state='blocked'] .hachitech-ab-guidance {
+    &[data-state='blocked'] .hachitech-hideguard-guidance {
         display: block;
     }
 
-    .hachitech-ab-retry {
+    .hachitech-hideguard-retry {
         display: none;
         margin-top: 24px;
     }
 
-    &[data-state='error'] .hachitech-ab-retry {
+    &[data-state='error'] .hachitech-hideguard-retry {
         display: inline-block;
     }
 
-    &[data-state='pending']:not([data-page='gate']) .hachitech-ab-message {
+    &[data-state='pending']:not([data-page='gate']) .hachitech-hideguard-message {
         border: 0;
         box-shadow: none;
         clip: rect(0, 0, 0, 0);
@@ -138,7 +138,7 @@ body[data-hachitech-ab-inert] {
     }
 
     noscript {
-        color: @hachitech-ab__muted-color;
+        color: @hachitech-hideguard__muted-color;
         font-size: 13px;
         margin-top: 20px;
         max-width: 440px;
@@ -146,15 +146,15 @@ body[data-hachitech-ab-inert] {
 }
 
 @media (max-width: 480px) {
-    .hachitech-ab-gate {
+    .hachitech-hideguard-gate {
         padding: 20px;
 
-        .hachitech-ab-message {
+        .hachitech-hideguard-message {
             border-radius: 20px;
             padding: 32px 24px;
         }
 
-        .hachitech-ab-guidance {
+        .hachitech-hideguard-guidance {
             padding: 16px;
         }
 

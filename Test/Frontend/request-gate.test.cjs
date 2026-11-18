@@ -64,7 +64,7 @@ function fixture(t, jquery = false, fetchResponse) {
     };
     window.HachitechsHideguardRequestConfig = {
         assetUrls: [origin + '/static/', origin + '/media/'],
-        verificationUrls: ['check', 'verdict', 'fail'].map(action => origin + '/antidetectbrowser/access/' + action + '/')
+        verificationUrls: ['check', 'verdict', 'fail'].map(action => origin + '/hideguard/access/' + action + '/')
     };
     window.eval(gateSource);
     if (jquery) {
@@ -104,7 +104,7 @@ for (const verdict of ['allowed', 'blocked', 'verification_failed']) {
         app.window.define = (dependencies, factory) => { runtime = factory(); };
         app.window.eval(fs.readFileSync(path.join(modulePath, 'view/frontend/web/js/runtime.js'), 'utf8'));
         const waiting = app.xhr('/runtime-widget');
-        const control = action => origin + '/antidetectbrowser/access/' + action + '/';
+        const control = action => origin + '/hideguard/access/' + action + '/';
         const api = runtime.initialize({enabled: true, points: ['all_pages'], page: '', pageProtected: true,
             initialState: 'pending', publicKey: 'fixture', accessUrl: control('check'),
             verdictUrl: control('verdict'), failUrl: control('fail'), endpointUrl: 'https://hideguard.example',
@@ -185,15 +185,15 @@ test('arbitrary application XHR/fetch wait and are sent once after backend Allow
 test('static/media/templates, cross-origin traffic and verification bypass pending', async t => {
     const app = fixture(t);
     const urls = ['/static/version1/theme/template.html', '/media/catalog/item.json',
-        '/antidetectbrowser/access/check/?retry=1', '/antidetectbrowser/access/verdict/',
-        '/antidetectbrowser/access/fail/'];
+        '/hideguard/access/check/?retry=1', '/hideguard/access/verdict/',
+        '/hideguard/access/fail/'];
     const requests = urls.map(url => app.xhr(url));
     await app.window.fetch('https://hideguard.example/sdk/v1.js');
     assert.equal(app.sent.length, urls.length);
     assert.equal(app.fetched.length, 1);
     assert.equal(app.window.HachitechsHideguardRequests.holds('/static-not-assets/foo.js', 'GET'), true);
     assert.equal(app.window.HachitechsHideguardRequests.holds('/static/file', 'POST'), true);
-    assert.equal(app.window.HachitechsHideguardRequests.holds('/antidetectbrowser/access/check/extra', 'GET'), true);
+    assert.equal(app.window.HachitechsHideguardRequests.holds('/hideguard/access/check/extra', 'GET'), true);
     await Promise.all(requests.map(request => request.done));
 });
 

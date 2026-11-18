@@ -46,7 +46,7 @@ class VarnishAccess
             if (!$settings['enabled']) {
                 continue;
             }
-            $patterns = ['antidetectbrowser/*'];
+            $patterns = ['hideguard/*'];
             if (array_intersect(['all_pages', 'product', 'cart', 'checkout'], $settings['points'])) {
                 // Native routes can have mutable SEO aliases; conservatively cover the store.
                 $patterns[] = '*';

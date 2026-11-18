@@ -87,7 +87,7 @@ if (PHP_SAPI === 'cli') {
     }
     if ($action === 'invalidate') { $files->locked(fn() => $files->invalidate()); echo 'invalidated'; exit; }
     $origin = json_decode(file_get_contents($stateFile), true, 16, JSON_THROW_ON_ERROR);
-    $patterns = ['antidetectbrowser/*', 'catalog/product/*', 'diamond.html', 'secret/*'];
+    $patterns = ['hideguard/*', 'catalog/product/*', 'diamond.html', 'secret/*'];
     if ($origin['offerProtected']) { $patterns[] = 'offer.html'; }
     $reader = $test->stub(SnapshotReader::class);
     $reader->method('read')->willReturn([

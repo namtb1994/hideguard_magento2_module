@@ -2,12 +2,12 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <!-- Negative priority runs before Magento_PageCache's dispatch plugins (default priority 0). -->
     <type name="Magento\Framework\App\FrontControllerInterface">
-        <plugin name="hachitech_antidetect_page" type="Hachitechs\Hideguard\Plugin\PageAccess" sortOrder="-100"/>
+        <plugin name="hachitech_hideguard_page" type="Hachitechs\Hideguard\Plugin\PageAccess" sortOrder="-100"/>
     </type>
     <type name="Magento\Framework\Controller\ResultInterface">
-        <plugin name="hachitech_antidetect_private_pages" type="Hachitechs\Hideguard\Plugin\PrivatePages" sortOrder="-100"/>
+        <plugin name="hachitech_hideguard_private_pages" type="Hachitechs\Hideguard\Plugin\PrivatePages" sortOrder="-100"/>
     </type>
     <type name="Magento\Framework\App\Response\Http">
-        <plugin name="hachitech_antidetect_private_response" type="Hachitechs\Hideguard\Plugin\PrivatePages"/>
+        <plugin name="hachitech_hideguard_private_response" type="Hachitechs\Hideguard\Plugin\PrivatePages"/>
     </type>
 </config>

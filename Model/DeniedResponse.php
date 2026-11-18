@@ -33,13 +33,13 @@ class DeniedResponse
     public function create(RequestInterface $request, array $state, bool $redirectPost = false): Http
     {
         $failed = in_array($state['status'], ['error', 'verification_failed'], true);
-        $gateUrl = $this->url->getUrl('antidetectbrowser/gate/index', [
+        $gateUrl = $this->url->getUrl('hideguard/gate/index', [
             '_secure' => true,
             '_query' => ['return' => base64_encode($this->returnPath($request))]
                 + ($failed ? ['failed' => '1'] : []),
         ]);
         $this->response->setHeader('Cache-Control', 'private, no-store, max-age=0', true);
-        $this->response->setHeader('X-Hachitech-Antidetect', 'denied', true);
+        $this->response->setHeader('X-Hachitech-HideGuard', 'denied', true);
         if ($state['status'] === 'blocked') {
             $this->response->setHeader('Retry-After', (string)max(1, (int)ceil(
                 ($state['blockedUntil'] - microtime(true) * 1000) / 1000

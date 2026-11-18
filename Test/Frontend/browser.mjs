@@ -22,7 +22,7 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   const retry = element('retry');
   retry.closest = selector => ['[data-action="retry"]', 'a,button,input,form'].includes(selector) ? retry : null;
   retry.matches = () => false;
-  const gate = element('hachitech-ab-gate'), content = element('page-content');
+  const gate = element('hachitech-hideguard-gate'), content = element('page-content');
   gate.children.push(retry);
   gate.querySelector = selector => selector === 'h2' ? heading : message;
   gate.setAttribute('data-state', initialState);
@@ -46,13 +46,13 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   };
   if (pageProtected || page === 'gate') {
     document.body.setAttribute('inert', '');
-    document.body.setAttribute('data-hachitech-ab-inert', '');
+    document.body.setAttribute('data-hachitech-hideguard-inert', '');
   }
   const bodyLockedBeforeInit = document.body.hasAttribute('inert');
   const window = {
     addEventListener: (name, callback) => listeners.set(name, callback),
     dispatchEvent(event) { listeners.get(event.type)?.(event); return true; },
-    location: {href: 'https://store.test/antidetectbrowser/gate/index',
+    location: {href: 'https://store.test/hideguard/gate/index',
       reload: () => { reloads++; }, replace: url => redirects.push(url)},
     fetch: async (url, options = {}) => {
       const body = Object.fromEntries(new URLSearchParams(options.body));
@@ -93,7 +93,7 @@ export function browser({preflight = {status: 'verification_required'}, report, 
   function ajaxStart(url) {
     const callbacks = [];
     const xhr = {status: 0, responseJSON: null,
-      getResponseHeader: name => name === 'X-Hachitech-Antidetect' ? xhr.marker : null,
+      getResponseHeader: name => name === 'X-Hachitech-HideGuard' ? xhr.marker : null,
       always: callback => callbacks.push(callback)};
     ajaxHandlers.forEach(callback => callback({url, global: false}, {}, xhr));
     return (code, marker, responseJSON) => {

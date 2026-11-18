@@ -3,7 +3,7 @@ define(['jquery', 'mage/translate'], function ($, $t) {
 
     return function (config, element) {
         var button = $(element),
-            message = button.next('.hachitech-ab-reset-status');
+            message = button.next('.hachitech-hideguard-reset-status');
 
         button.on('click', function () {
             button.prop('disabled', true);

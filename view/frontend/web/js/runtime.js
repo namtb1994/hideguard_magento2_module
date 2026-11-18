@@ -28,7 +28,7 @@ var HideGuardRuntime = (() => {
 
   // src/interaction-lock.js
   function createInteractionLock() {
-    var locked = false, gate, changed = /* @__PURE__ */ new Set(), initialBodyLock = document.body.hasAttribute("data-hachitech-ab-inert");
+    var locked = false, gate, changed = /* @__PURE__ */ new Set(), initialBodyLock = document.body.hasAttribute("data-hachitech-hideguard-inert");
     function sync() {
       if (!locked) {
         changed.forEach(function(element) {
@@ -48,7 +48,7 @@ var HideGuardRuntime = (() => {
     function setLocked(value, element) {
       locked = value;
       gate = element;
-      document.documentElement.classList.toggle("hachitech-ab-locked", locked);
+      document.documentElement.classList.toggle("hachitech-hideguard-locked", locked);
       sync();
     }
     function guard(event) {
@@ -61,18 +61,18 @@ var HideGuardRuntime = (() => {
       document.addEventListener(name, guard, { capture: true, passive: false });
     });
     new MutationObserver(sync).observe(document.body, { childList: true });
-    gate = document.getElementById("hachitech-ab-gate");
+    gate = document.getElementById("hachitech-hideguard-gate");
     setLocked(initialBodyLock || Boolean(gate && !gate.hidden), gate);
     if (initialBodyLock) {
       document.body.removeAttribute("inert");
-      document.body.removeAttribute("data-hachitech-ab-inert");
+      document.body.removeAttribute("data-hachitech-hideguard-inert");
     }
     return { setLocked };
   }
 
   // src/runtime.js
   function initialize(config, options = {}) {
-    var status = "pending", expiresAt = 0, revision = 0, verificationStarted = false, verificationId = config.verificationId || "", verificationUntil = 0, queue = Promise.resolve(), timer, sdkTimer, gate = document.getElementById("hachitech-ab-gate"), channel, recheck, pageProtected, waiters = [];
+    var status = "pending", expiresAt = 0, revision = 0, verificationStarted = false, verificationId = config.verificationId || "", verificationUntil = 0, queue = Promise.resolve(), timer, sdkTimer, gate = document.getElementById("hachitech-hideguard-gate"), channel, recheck, pageProtected, waiters = [];
     if (!config.enabled || window.HideGuardAccess) {
       return;
     }
@@ -88,17 +88,17 @@ var HideGuardRuntime = (() => {
       };
       if ((pageProtected || forceGate) && !gate) {
         gate = document.createElement("section");
-        gate.id = "hachitech-ab-gate";
-        gate.className = "hachitech-ab-gate";
+        gate.id = "hachitech-hideguard-gate";
+        gate.className = "hachitech-hideguard-gate";
         gate.setAttribute("role", "dialog");
         gate.setAttribute("aria-modal", "true");
-        gate.setAttribute("aria-labelledby", "hachitech-ab-heading");
-        gate.setAttribute("aria-describedby", "hachitech-ab-description");
-        gate.innerHTML = '<div class="hachitech-ab-message"><div class="hachitech-ab-icon" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 3 4 6v5c0 5.2 3.4 8.6 8 10 4.6-1.4 8-4.8 8-10V6l-8-3Z"/><rect x="9" y="10" width="6" height="5" rx="1"/><path d="M10 10V8a2 2 0 0 1 4 0v2"/></svg></div><span class="hachitech-ab-eyebrow"></span><h2 id="hachitech-ab-heading"></h2><p id="hachitech-ab-description" role="status" aria-live="polite"></p><div class="hachitech-ab-guidance"><span class="hachitech-ab-guidance-title"></span><span class="hachitech-ab-guidance-text"></span></div><button type="button" class="hachitech-ab-retry" data-action="retry"></button></div>';
-        gate.querySelector(".hachitech-ab-retry").textContent = $t("Try again");
-        gate.querySelector(".hachitech-ab-eyebrow").textContent = $t("Protected access");
-        gate.querySelector(".hachitech-ab-guidance-title").textContent = $t("What happens next");
-        gate.querySelector(".hachitech-ab-guidance-text").textContent = $t("This page will check your access again automatically when the restriction ends.");
+        gate.setAttribute("aria-labelledby", "hachitech-hideguard-heading");
+        gate.setAttribute("aria-describedby", "hachitech-hideguard-description");
+        gate.innerHTML = '<div class="hachitech-hideguard-message"><div class="hachitech-hideguard-icon" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 3 4 6v5c0 5.2 3.4 8.6 8 10 4.6-1.4 8-4.8 8-10V6l-8-3Z"/><rect x="9" y="10" width="6" height="5" rx="1"/><path d="M10 10V8a2 2 0 0 1 4 0v2"/></svg></div><span class="hachitech-hideguard-eyebrow"></span><h2 id="hachitech-hideguard-heading"></h2><p id="hachitech-hideguard-description" role="status" aria-live="polite"></p><div class="hachitech-hideguard-guidance"><span class="hachitech-hideguard-guidance-title"></span><span class="hachitech-hideguard-guidance-text"></span></div><button type="button" class="hachitech-hideguard-retry" data-action="retry"></button></div>';
+        gate.querySelector(".hachitech-hideguard-retry").textContent = $t("Try again");
+        gate.querySelector(".hachitech-hideguard-eyebrow").textContent = $t("Protected access");
+        gate.querySelector(".hachitech-hideguard-guidance-title").textContent = $t("What happens next");
+        gate.querySelector(".hachitech-hideguard-guidance-text").textContent = $t("This page will check your access again automatically when the restriction ends.");
         document.body.appendChild(gate);
       }
       if (!gate) {
@@ -371,7 +371,7 @@ var HideGuardRuntime = (() => {
       }
     });
     try {
-      channel = new BroadcastChannel("hachitech-antidetect");
+      channel = new BroadcastChannel("hachitech-hideguard");
       channel.onmessage = function(event) {
         if (event.data && event.data.type === "block") {
           if (config.page === "gate") {
@@ -407,7 +407,7 @@ var HideGuardRuntime = (() => {
   }
 
   // entry.js
-  var styleText = "html.hachitech-ab-locked body,\nbody[data-hachitech-ab-inert] {\n  overflow: hidden;\n}\n.hachitech-ab-gate {\n  align-items: center;\n  background: transparent;\n  box-sizing: border-box;\n  color: #182830;\n  display: flex;\n  flex-direction: column;\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  inset: 0;\n  justify-content: center;\n  line-height: 1.6;\n  overflow: auto;\n  padding: 24px;\n  pointer-events: auto;\n  position: fixed;\n  text-align: center;\n  visibility: visible !important;\n  z-index: 2147483647;\n}\n.hachitech-ab-gate[hidden] {\n  display: none;\n}\n.hachitech-ab-gate[data-state='blocked'],\n.hachitech-ab-gate[data-page='gate'] {\n  background: #fff;\n}\n.hachitech-ab-gate .hachitech-ab-message {\n  background: #fff;\n  border: 1px solid #e5eaed;\n  border-radius: 24px;\n  box-shadow: 0 20px 64px rgba(24, 40, 48, 0.08);\n  box-sizing: border-box;\n  flex-shrink: 0;\n  margin: auto 0;\n  max-width: 560px;\n  padding: 48px;\n  width: 100%;\n}\n.hachitech-ab-gate .hachitech-ab-icon {\n  align-items: center;\n  background: #fff1e8;\n  border-radius: 20px;\n  color: #aa562e;\n  display: flex;\n  height: 72px;\n  justify-content: center;\n  margin: 0 auto 24px;\n  width: 72px;\n}\n.hachitech-ab-gate .hachitech-ab-eyebrow {\n  color: #63727a;\n  display: block;\n  font-size: 11px;\n  font-weight: 600;\n  letter-spacing: 0.14em;\n  margin-bottom: 12px;\n  text-transform: uppercase;\n}\n.hachitech-ab-gate h2 {\n  color: #182830;\n  font-size: 30px;\n  font-weight: 600;\n  letter-spacing: -0.025em;\n  line-height: 1.25;\n  margin: 0 0 16px;\n}\n.hachitech-ab-gate p {\n  color: #63727a;\n  font-size: 16px;\n  line-height: 1.7;\n  margin: 0;\n}\n.hachitech-ab-gate .hachitech-ab-guidance {\n  background: #f6f8fa;\n  border-radius: 12px;\n  color: #63727a;\n  display: none;\n  font-size: 13px;\n  line-height: 1.7;\n  margin-top: 28px;\n  padding: 20px 24px;\n}\n.hachitech-ab-gate .hachitech-ab-guidance-title {\n  color: #182830;\n  display: block;\n  font-size: 12px;\n  font-weight: 600;\n  margin-bottom: 4px;\n}\n.hachitech-ab-gate[data-state='blocked'] .hachitech-ab-guidance {\n  display: block;\n}\n.hachitech-ab-gate .hachitech-ab-retry {\n  display: none;\n  margin-top: 24px;\n}\n.hachitech-ab-gate[data-state='error'] .hachitech-ab-retry {\n  display: inline-block;\n}\n.hachitech-ab-gate[data-state='pending']:not([data-page='gate']) .hachitech-ab-message {\n  border: 0;\n  box-shadow: none;\n  clip: rect(0, 0, 0, 0);\n  clip-path: inset(50%);\n  height: 1px;\n  margin: -1px;\n  overflow: hidden;\n  padding: 0;\n  position: absolute;\n  white-space: nowrap;\n  width: 1px;\n}\n.hachitech-ab-gate noscript {\n  color: #63727a;\n  font-size: 13px;\n  margin-top: 20px;\n  max-width: 440px;\n}\n@media (max-width: 480px) {\n  .hachitech-ab-gate {\n    padding: 20px;\n  }\n  .hachitech-ab-gate .hachitech-ab-message {\n    border-radius: 20px;\n    padding: 32px 24px;\n  }\n  .hachitech-ab-gate .hachitech-ab-guidance {\n    padding: 16px;\n  }\n  .hachitech-ab-gate h2 {\n    font-size: 26px;\n  }\n}\n";
+  var styleText = "html.hachitech-hideguard-locked body,\nbody[data-hachitech-hideguard-inert] {\n  overflow: hidden;\n}\n.hachitech-hideguard-gate {\n  align-items: center;\n  background: transparent;\n  box-sizing: border-box;\n  color: #182830;\n  display: flex;\n  flex-direction: column;\n  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;\n  inset: 0;\n  justify-content: center;\n  line-height: 1.6;\n  overflow: auto;\n  padding: 24px;\n  pointer-events: auto;\n  position: fixed;\n  text-align: center;\n  visibility: visible !important;\n  z-index: 2147483647;\n}\n.hachitech-hideguard-gate[hidden] {\n  display: none;\n}\n.hachitech-hideguard-gate[data-state='blocked'],\n.hachitech-hideguard-gate[data-page='gate'] {\n  background: #fff;\n}\n.hachitech-hideguard-gate .hachitech-hideguard-message {\n  background: #fff;\n  border: 1px solid #e5eaed;\n  border-radius: 24px;\n  box-shadow: 0 20px 64px rgba(24, 40, 48, 0.08);\n  box-sizing: border-box;\n  flex-shrink: 0;\n  margin: auto 0;\n  max-width: 560px;\n  padding: 48px;\n  width: 100%;\n}\n.hachitech-hideguard-gate .hachitech-hideguard-icon {\n  align-items: center;\n  background: #fff1e8;\n  border-radius: 20px;\n  color: #aa562e;\n  display: flex;\n  height: 72px;\n  justify-content: center;\n  margin: 0 auto 24px;\n  width: 72px;\n}\n.hachitech-hideguard-gate .hachitech-hideguard-eyebrow {\n  color: #63727a;\n  display: block;\n  font-size: 11px;\n  font-weight: 600;\n  letter-spacing: 0.14em;\n  margin-bottom: 12px;\n  text-transform: uppercase;\n}\n.hachitech-hideguard-gate h2 {\n  color: #182830;\n  font-size: 30px;\n  font-weight: 600;\n  letter-spacing: -0.025em;\n  line-height: 1.25;\n  margin: 0 0 16px;\n}\n.hachitech-hideguard-gate p {\n  color: #63727a;\n  font-size: 16px;\n  line-height: 1.7;\n  margin: 0;\n}\n.hachitech-hideguard-gate .hachitech-hideguard-guidance {\n  background: #f6f8fa;\n  border-radius: 12px;\n  color: #63727a;\n  display: none;\n  font-size: 13px;\n  line-height: 1.7;\n  margin-top: 28px;\n  padding: 20px 24px;\n}\n.hachitech-hideguard-gate .hachitech-hideguard-guidance-title {\n  color: #182830;\n  display: block;\n  font-size: 12px;\n  font-weight: 600;\n  margin-bottom: 4px;\n}\n.hachitech-hideguard-gate[data-state='blocked'] .hachitech-hideguard-guidance {\n  display: block;\n}\n.hachitech-hideguard-gate .hachitech-hideguard-retry {\n  display: none;\n  margin-top: 24px;\n}\n.hachitech-hideguard-gate[data-state='error'] .hachitech-hideguard-retry {\n  display: inline-block;\n}\n.hachitech-hideguard-gate[data-state='pending']:not([data-page='gate']) .hachitech-hideguard-message {\n  border: 0;\n  box-shadow: none;\n  clip: rect(0, 0, 0, 0);\n  clip-path: inset(50%);\n  height: 1px;\n  margin: -1px;\n  overflow: hidden;\n  padding: 0;\n  position: absolute;\n  white-space: nowrap;\n  width: 1px;\n}\n.hachitech-hideguard-gate noscript {\n  color: #63727a;\n  font-size: 13px;\n  margin-top: 20px;\n  max-width: 440px;\n}\n@media (max-width: 480px) {\n  .hachitech-hideguard-gate {\n    padding: 20px;\n  }\n  .hachitech-hideguard-gate .hachitech-hideguard-message {\n    border-radius: 20px;\n    padding: 32px 24px;\n  }\n  .hachitech-hideguard-gate .hachitech-hideguard-guidance {\n    padding: 16px;\n  }\n  .hachitech-hideguard-gate h2 {\n    font-size: 26px;\n  }\n}\n";
   return __toCommonJS(entry_exports);
 })();
 return HideGuardRuntime;

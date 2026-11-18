@@ -30,10 +30,10 @@ class BrowserIdentity
             throw new GuardException(FailureReason::InvalidIdentity, 'A browser session is required for verification.');
         }
         // Keep browser continuity when Magento regenerates the PHP session ID at login.
-        $browserId = (string)$this->session->getData('hachitech_antidetect_browser_id');
+        $browserId = (string)$this->session->getData('hachitech_hideguard_browser_id');
         if (!preg_match('/^[a-f0-9]{64}$/D', $browserId)) {
             $browserId = bin2hex(random_bytes(32));
-            $this->session->setData('hachitech_antidetect_browser_id', $browserId);
+            $this->session->setData('hachitech_hideguard_browser_id', $browserId);
         }
         return hash('sha256', $browserId);
     }

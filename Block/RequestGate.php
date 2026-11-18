@@ -51,9 +51,9 @@ class RequestGate extends Template
                 $store->getBaseUrl(UrlInterface::URL_TYPE_MEDIA, true),
             ],
             'verificationUrls' => [
-                $this->getUrl('antidetectbrowser/access/check', ['_secure' => true]),
-                $this->getUrl('antidetectbrowser/access/verdict', ['_secure' => true]),
-                $this->getUrl('antidetectbrowser/access/fail', ['_secure' => true]),
+                $this->getUrl('hideguard/access/check', ['_secure' => true]),
+                $this->getUrl('hideguard/access/verdict', ['_secure' => true]),
+                $this->getUrl('hideguard/access/fail', ['_secure' => true]),
             ],
         ];
     }

@@ -128,7 +128,7 @@ class RateLimitsConfigTest extends TestCase
         self::assertSame(['enabled', 'public_key', 'api_key', 'signature_public_key', 'protected_paths', 'block_duration',
             'pass_duration', 'debug', 'reset_blocks'], $ids);
         $defaults = simplexml_load_file(dirname(__DIR__, 3) . '/etc/config.xml')
-            ->default->hachitech_antidetectbrowser->general;
+            ->default->hachitech_hideguard->general;
         foreach (RuntimeSettings::LEGACY_ADMIN_FIELDS as $field) {
             self::assertNotContains($field, $ids);
             self::assertFalse(isset($defaults->$field));

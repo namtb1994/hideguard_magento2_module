@@ -47,7 +47,7 @@ $make = function (string $adapter) use ($pdo, $prefix, $resource, $om): Guard {
         $atomic = $storage;
     } else {
         foreach (['session', 'block', 'rate', 'control', 'circuit'] as $suffix) {
-            $resource->setMappedTableName('hachitech_antidetect_' . $suffix, $prefix . 'mag_' . $suffix);
+            $resource->setMappedTableName('hachitech_hideguard_' . $suffix, $prefix . 'mag_' . $suffix);
         }
         $storage = new StateRepository($resource);
         $atomic = new StoreLock($om->get(Magento\Framework\Lock\LockManagerInterface::class), $resource);
@@ -149,7 +149,7 @@ try {
     $tables[] = $prefix . 'pdo_circuit';
     $schema = simplexml_load_file(dirname(__DIR__, 2) . '/etc/db_schema.xml');
     foreach ($schema->table as $declaration) {
-        $name = $prefix . 'mag_' . str_replace('hachitech_antidetect_', '', (string)$declaration['name']);
+        $name = $prefix . 'mag_' . str_replace('hachitech_hideguard_', '', (string)$declaration['name']);
         $table = $db->newTable($name)->setComment('Isolated high traffic test');
         foreach ($declaration->column as $column) {
             $type = (string)$column->attributes('http://www.w3.org/2001/XMLSchema-instance')['type'];
@@ -296,7 +296,7 @@ try {
         } else {
             $otherResource = $om->create(Magento\Framework\App\ResourceConnection::class);
             foreach (['session', 'block', 'rate', 'control', 'circuit'] as $suffix) {
-                $otherResource->setMappedTableName('hachitech_antidetect_' . $suffix, $prefix . 'mag_' . $suffix);
+                $otherResource->setMappedTableName('hachitech_hideguard_' . $suffix, $prefix . 'mag_' . $suffix);
             }
             ensureTraffic($otherResource->getConnection()->getConnection() !== $db->getConnection(), 'Connections must differ');
             $otherStorage = new StateRepository($otherResource);
@@ -367,7 +367,7 @@ try {
             $resource->_resetState();
             $storage->_resetState(); $atomic->_resetState(); $circuit->_resetState();
             foreach (['session', 'block', 'rate', 'control', 'circuit'] as $suffix) {
-                $resource->setMappedTableName('hachitech_antidetect_' . $suffix, $prefix . 'mag_' . $suffix);
+                $resource->setMappedTableName('hachitech_hideguard_' . $suffix, $prefix . 'mag_' . $suffix);
             }
             $atomic->run('64997', fn() => $storage->saveSession('64997',
                 new \Hachitechs\HideguardPhp\Access\BrowserState('after-reset')));

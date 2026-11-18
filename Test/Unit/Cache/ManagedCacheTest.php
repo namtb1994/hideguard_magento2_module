@@ -47,7 +47,7 @@ class ManagedCacheTest extends TestCase
         $reader = $this->createStub(SnapshotReader::class);
         $reader->method('read')->willReturn([
             ['store_id' => 1, 'bases' => ['https://shop.example/en/'],
-                'patterns' => ['antidetectbrowser/*', 'catalog/product/*', 'diamond.html', 'Campaign/*']],
+                'patterns' => ['hideguard/*', 'catalog/product/*', 'diamond.html', 'Campaign/*']],
             ['store_id' => 2, 'bases' => ['https://shop.example/fr/'], 'patterns' => ['*']],
         ]);
         $vcl = (new ManagedVcl($this->files, $reader, new PathMatcher()))->generate(self::VCL);

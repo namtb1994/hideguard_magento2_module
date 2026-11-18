@@ -55,7 +55,7 @@ class SnapshotReader
             foreach ($this->stores->getStores() as $store) {
                 $id = (int)$store->getId();
                 $settings = $this->config->settings($id);
-                $patterns = ['antidetectbrowser/*'];
+                $patterns = ['hideguard/*'];
                 if ($settings['enabled']) {
                     $patterns = [...$patterns, ...$settings['pageRules'],
                         ...$this->rules->nativePatterns($settings['points'])];

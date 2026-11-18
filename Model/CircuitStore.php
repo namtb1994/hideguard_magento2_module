@@ -24,7 +24,7 @@ class CircuitStore implements CircuitBreakerStoreContract, ResetAfterRequestInte
     {
         return $this->store ??= new PdoCircuitBreakerStore(
             $this->resource->getConnection()->getConnection(),
-            $this->resource->getTableName('hachitech_antidetect_circuit')
+            $this->resource->getTableName('hachitech_hideguard_circuit')
         );
     }
 

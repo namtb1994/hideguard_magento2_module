@@ -44,7 +44,7 @@ class Bootstrap extends Template
             && $this->pageConfig->getElementAttribute(PageConfig::ELEMENT_TYPE_BODY, 'inert') === null
         ) {
             $this->pageConfig->setElementAttribute(PageConfig::ELEMENT_TYPE_BODY, 'inert', '');
-            $this->pageConfig->setElementAttribute(PageConfig::ELEMENT_TYPE_BODY, 'data-hachitech-ab-inert', '');
+            $this->pageConfig->setElementAttribute(PageConfig::ELEMENT_TYPE_BODY, 'data-hachitech-hideguard-inert', '');
         }
         return parent::_prepareLayout();
     }
@@ -88,11 +88,11 @@ class Bootstrap extends Template
             'verificationId' => $state['verificationId'] ?? null,
             'endpointUrl' => ProtectionPolicy::defaultEndpointUrl(Config::ENVIRONMENT),
             'publicKey' => $settings['keys'][Config::ENVIRONMENT]['publicKey'],
-            'accessUrl' => $this->getUrl('antidetectbrowser/access/check', ['_secure' => true]),
-            'verdictUrl' => $this->getUrl('antidetectbrowser/access/verdict', ['_secure' => true]),
-            'failUrl' => $this->getUrl('antidetectbrowser/access/fail', ['_secure' => true]),
-            'gateUrl' => $this->getUrl('antidetectbrowser/gate/index', ['_secure' => true, '_query' => $gateQuery]),
-            'deniedUrl' => $this->getUrl('antidetectbrowser/gate/index', [
+            'accessUrl' => $this->getUrl('hideguard/access/check', ['_secure' => true]),
+            'verdictUrl' => $this->getUrl('hideguard/access/verdict', ['_secure' => true]),
+            'failUrl' => $this->getUrl('hideguard/access/fail', ['_secure' => true]),
+            'gateUrl' => $this->getUrl('hideguard/gate/index', ['_secure' => true, '_query' => $gateQuery]),
+            'deniedUrl' => $this->getUrl('hideguard/gate/index', [
                 '_secure' => true, '_query' => $gateQuery + ['failed' => '1'],
             ]),
             'returnUrl' => $this->returnPath(),
@@ -106,7 +106,7 @@ class Bootstrap extends Template
      */
     private function isGatePage(): bool
     {
-        return strtolower((string)$this->getRequest()->getFullActionName()) === 'antidetectbrowser_gate_index';
+        return strtolower((string)$this->getRequest()->getFullActionName()) === 'hideguard_gate_index';
     }
 
     /**
@@ -120,7 +120,7 @@ class Bootstrap extends Template
         // Only root-relative paths; reject external, backslash and control-character redirects.
         if (!is_string($path) || !str_starts_with($path, '/') || str_starts_with($path, '//')
             || preg_match('/[\\\\\x00-\x20]/', $path)
-            || stripos($path, 'antidetectbrowser/gate') !== false
+            || stripos($path, 'hideguard/gate') !== false
         ) {
             return $this->_storeManager->getStore()->getBaseUrl();
         }

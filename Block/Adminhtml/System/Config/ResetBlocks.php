@@ -28,7 +28,7 @@ class ResetBlocks extends Field
     public function getResetConfig(): array
     {
         return [
-            'url' => $this->getUrl('antidetectbrowser/blocks/reset'),
+            'url' => $this->getUrl('hideguard/blocks/reset'),
             'store' => (string)$this->getRequest()->getParam('store', ''),
             'website' => (string)$this->getRequest()->getParam('website', ''),
         ];

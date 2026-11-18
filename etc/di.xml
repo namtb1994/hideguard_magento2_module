@@ -3,7 +3,7 @@
     <type name="Magento\Csp\Model\CompositePolicyCollector">
         <arguments>
             <argument name="collectors" xsi:type="array">
-                <item name="hachitech_antidetect" xsi:type="object" sortOrder="10">Hachitechs\Hideguard\Model\CspCollector</item>
+                <item name="hachitech_hideguard" xsi:type="object" sortOrder="10">Hachitechs\Hideguard\Model\CspCollector</item>
             </argument>
         </arguments>
     </type>
@@ -100,14 +100,12 @@
     <type name="Magento\Config\Model\Config\TypePool">
         <arguments>
             <argument name="sensitive" xsi:type="array">
-                <item name="hachitech_antidetectbrowser/development/api_key" xsi:type="string">1</item>
-                <item name="hachitech_antidetectbrowser/staging/api_key" xsi:type="string">1</item>
-                <item name="hachitech_antidetectbrowser/production/api_key" xsi:type="string">1</item>
+                <item name="hachitech_hideguard/production/api_key" xsi:type="string">1</item>
             </argument>
         </arguments>
     </type>
     <type name="Magento\Framework\App\FrontControllerInterface">
-        <plugin name="hachitech_antidetect_action_response" type="Hachitechs\Hideguard\Plugin\ActionResponse" sortOrder="-200"/>
+        <plugin name="hachitech_hideguard_action_response" type="Hachitechs\Hideguard\Plugin\ActionResponse" sortOrder="-200"/>
     </type>
     <type name="Magento\Customer\Api\AccountManagementInterface">
         <plugin name="hachitechs_hideguard_account" type="Hachitechs\Hideguard\Plugin\AuthAccess" sortOrder="10"/>
@@ -116,16 +114,16 @@
         <plugin name="hachitechs_hideguard_token" type="Hachitechs\Hideguard\Plugin\AuthAccess" sortOrder="10"/>
     </type>
     <type name="Magento\Quote\Model\Quote">
-        <plugin name="hachitech_antidetect_cart" type="Hachitechs\Hideguard\Plugin\QuoteAccess" sortOrder="10"/>
+        <plugin name="hachitech_hideguard_cart" type="Hachitechs\Hideguard\Plugin\QuoteAccess" sortOrder="10"/>
     </type>
     <type name="Magento\Quote\Model\QuoteManagement">
-        <plugin name="hachitech_antidetect_order" type="Hachitechs\Hideguard\Plugin\OrderAccess" sortOrder="10"/>
+        <plugin name="hachitech_hideguard_order" type="Hachitechs\Hideguard\Plugin\OrderAccess" sortOrder="10"/>
     </type>
     <type name="Magento\Config\Model\Config">
-        <plugin name="hachitech_antidetect_settings" type="Hachitechs\Hideguard\Plugin\ValidateSettings" sortOrder="10"/>
+        <plugin name="hachitech_hideguard_settings" type="Hachitechs\Hideguard\Plugin\ValidateSettings" sortOrder="10"/>
     </type>
     <type name="Magento\PageCache\Model\VclGeneratorInterface">
-        <plugin name="hachitech_antidetect_varnish_pass" type="Hachitechs\Hideguard\Plugin\VarnishAccess"/>
+        <plugin name="hachitech_hideguard_varnish_pass" type="Hachitechs\Hideguard\Plugin\VarnishAccess"/>
     </type>
     <type name="Magento\Framework\Console\CommandList">
         <arguments><argument name="commands" xsi:type="array">

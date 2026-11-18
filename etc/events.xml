@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="sales_model_service_quote_submit_before">
-        <observer name="hachitech_antidetect_order_verdict" instance="Hachitechs\Hideguard\Observer\CheckAction"/>
+        <observer name="hachitech_hideguard_order_verdict" instance="Hachitechs\Hideguard\Observer\CheckAction"/>
     </event>
     <event name="sales_model_service_quote_submit_success">
-        <observer name="hachitech_antidetect_consume" instance="Hachitechs\Hideguard\Observer\ConsumeGrant"/>
+        <observer name="hachitech_hideguard_consume" instance="Hachitechs\Hideguard\Observer\ConsumeGrant"/>
     </event>
-    <event name="admin_system_config_changed_section_hachitech_antidetectbrowser">
-        <observer name="hachitech_antidetect_revoke" instance="Hachitechs\Hideguard\Observer\SettingsChanged"/>
+    <event name="admin_system_config_changed_section_hachitech_hideguard">
+        <observer name="hachitech_hideguard_revoke" instance="Hachitechs\Hideguard\Observer\SettingsChanged"/>
     </event>
 </config>

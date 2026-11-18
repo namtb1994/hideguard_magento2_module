@@ -59,7 +59,7 @@ class AccessTest extends TestCase
     {
         $xml = simplexml_load_file(dirname(__DIR__, 3) . '/etc/config.xml');
         self::assertSame(ProtectionPolicy::DEFAULT_PASS_DURATION,
-            (int)$xml->default->hachitech_antidetectbrowser->general->pass_duration);
+            (int)$xml->default->hachitech_hideguard->general->pass_duration);
         foreach ([
             \Hachitechs\Hideguard\Model\Config\Source\PassDuration::class => ProtectionPolicy::PASS_DURATIONS,
             \Hachitechs\Hideguard\Model\Config\Source\Duration::class => ProtectionPolicy::BLOCK_DURATIONS,

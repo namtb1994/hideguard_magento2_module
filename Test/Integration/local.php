@@ -33,7 +33,7 @@ if ($registrar->getPath($registrar::MODULE, 'Hachitechs_Hideguard') === null) {
 }
 $deployment = require BP . '/app/etc/config.php';
 $deployment['modules']['Hachitechs_Hideguard'] = 1;
-$cachePath = BP . '/var/hachitech-ab-test-' . bin2hex(random_bytes(5));
+$cachePath = BP . '/var/hachitech-hideguard-test-' . bin2hex(random_bytes(5));
 // Load current XML in this process even when the checkout has compiled DI for other modules.
 class LocalAbEnvironmentFactory extends \Magento\Framework\App\EnvironmentFactory
 {
@@ -73,7 +73,7 @@ $schema = simplexml_load_file(dirname(__DIR__, 2) . '/etc/db_schema.xml');
 $tables = [];
 try {
 foreach ($schema->table as $declaration) {
-    $name = 'tmp_ab_' . bin2hex(random_bytes(5)) . '_' . str_replace('hachitech_antidetect_', '', (string)$declaration['name']);
+    $name = 'tmp_ab_' . bin2hex(random_bytes(5)) . '_' . str_replace('hachitech_hideguard_', '', (string)$declaration['name']);
     $table = $db->newTable($name)->setComment('Isolated HideGuard test');
     foreach ($declaration->column as $column) {
         $type = (string)$column->attributes('http://www.w3.org/2001/XMLSchema-instance')['type'];
@@ -166,7 +166,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $identity->customer = 42;
     $identity->browser = 'legacy-block';
     $legacyUntil = time() + 700;
-    $db->insertOnDuplicate($resource->getTableName('hachitech_antidetect_block'), [
+    $db->insertOnDuplicate($resource->getTableName('hachitech_hideguard_block'), [
         'identity_hash' => hash('sha256', 'customer:42'), 'store_id' => $storeId, 'blocked_until' => $legacyUntil,
     ]);
     checkAb($access->pageStatus($storeId)['blockedUntil'] === $legacyUntil * 1000, 'Legacy customer ban survives mapping');
@@ -177,7 +177,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $access->resetBlocks($storeId);
     $identity->browser = 'browser-a';
     $legacyHash = $identity->hash();
-    $db->insertOnDuplicate($resource->getTableName('hachitech_antidetect_session'), [
+    $db->insertOnDuplicate($resource->getTableName('hachitech_hideguard_session'), [
         'session_hash' => $legacyHash, 'store_id' => $storeId, 'customer_id' => 0,
         'last_seen' => time(), 'granted_until' => time() + 300, 'policy_hash' => str_repeat('f', 64),
     ]);
@@ -374,7 +374,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     checkAb(($debugField['type'] ?? null) === 'select'
         && ($debugField['source_model'] ?? null) === \Magento\Config\Model\Config\Source\Yesno::class
         && (string)simplexml_load_file(dirname(__DIR__, 2) . '/etc/config.xml')
-            ->default->hachitech_antidetectbrowser->general->debug === '0',
+            ->default->hachitech_hideguard->general->debug === '0',
         'Debug Log uses the native Yes/No field and defaults to off');
     foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $scope) {
         checkAb(($debugField[$scope] ?? null) === '1', 'Debug Log supports ' . $scope);
@@ -401,7 +401,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     }
     $plugins = $om->get(\Magento\Framework\Interception\PluginListInterface::class);
     $next = $plugins->getNext(\Magento\Framework\App\FrontController::class, 'dispatch');
-    checkAb(($next[\Magento\Framework\Interception\DefinitionInterface::LISTENER_AROUND] ?? '') === 'hachitech_antidetect_page', 'Backend gate precedes built-in/Varnish cache plugins');
+    checkAb(($next[\Magento\Framework\Interception\DefinitionInterface::LISTENER_AROUND] ?? '') === 'hachitech_hideguard_page', 'Backend gate precedes built-in/Varnish cache plugins');
     $request = $om->get(\Magento\Framework\App\Request\Http::class);
     $request->setRouteName('cms')->setControllerName('index')->setActionName('index')->setPathInfo('/');
     $config->value['points'] = ['product'];
@@ -437,23 +437,23 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $config->value['points'] = ['product'];
     checkAb($requestGate->toHtml() === '', 'Unprotected home installs no transport barrier');
     $config->value['points'] = ['all_pages', 'complete_order'];
-    $request->setRouteName('antidetectbrowser')->setControllerName('gate')->setActionName('index')
-        ->setPathInfo('/antidetectbrowser/gate/index/');
+    $request->setRouteName('hideguard')->setControllerName('gate')->setActionName('index')
+        ->setPathInfo('/hideguard/gate/index/');
     checkAb($requestGate->toHtml() === '', 'Gate stays exempt even with All pages');
     echo "PASS: native early script ordering, RequireJS variables, enabled/protected scope, gate exemption and public config.\n";
     if (in_array('--request-gate-only', $argv, true)) {
         return;
     }
     $page = $om->create(\Hachitechs\Hideguard\Controller\Gate\Index::class)->execute();
-    $page->addHandle('antidetectbrowser_gate_index');
+    $page->addHandle('hideguard_gate_index');
     $response = $om->create(\Magento\Framework\App\Response\Http::class);
     $page->renderResult($response);
-    checkAb(str_contains($response->getBody(), 'id="hachitech-ab-gate"'), 'Server renders standalone gate HTML');
+    checkAb(str_contains($response->getBody(), 'id="hachitech-hideguard-gate"'), 'Server renders standalone gate HTML');
     checkAb(str_contains($response->getBody(), 'data-state="pending"'), 'Initial gate remains pending until the backend confirms a verdict');
     checkAb(str_contains($response->getBody(), 'data-page="gate"'), 'Server marks standalone gate before AMD initialization');
     checkAb(!str_contains($response->getBody(), 'page-title-wrapper'), 'Gate does not render a background page heading');
     checkAb((bool)preg_match('/<body\b[^>]*\binert=""[^>]*>/', $response->getBody()), 'Server locks the body before AMD/SDK initialization');
-    checkAb(str_contains($response->getBody(), 'data-hachitech-ab-inert=""'), 'Server marks its own initial body lock');
+    checkAb(str_contains($response->getBody(), 'data-hachitech-hideguard-inert=""'), 'Server marks its own initial body lock');
     checkAb(!str_contains($response->getBody(), 'interaction-lock.js'), 'Interaction lock is loaded through AMD rather than a direct script tag');
     checkAb(str_contains($response->getBody(), 'type="text/x-magento-init"'), 'Frontend uses Magento declarative initialization');
     checkAb(str_contains($response->getBody(), 'Hachitechs_Hideguard\\/js\\/access'), 'Gate initializes frontend verification');
@@ -462,7 +462,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
         'Inactive and signature keys stay off storefront');
     checkAb(str_contains($response->getHeader('Cache-Control')->getFieldValue(), 'no-store'), 'Gate HTML cannot be cached');
     $renderPlugins = $plugins->getNext(\Magento\Framework\View\Result\Page::class, 'renderResult');
-    checkAb(($renderPlugins[\Magento\Framework\Interception\DefinitionInterface::LISTENER_AFTER][0] ?? '') === 'hachitech_antidetect_private_pages', 'No-store runs before result caching');
+    checkAb(($renderPlugins[\Magento\Framework\Interception\DefinitionInterface::LISTENER_AFTER][0] ?? '') === 'hachitech_hideguard_private_pages', 'No-store runs before result caching');
     checkAb(!str_contains($response->getBody(), 'product-info-main'), 'Gate contains no product page content');
 
     $identity->browser = 'http-block-test';
@@ -477,13 +477,13 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     );
     checkAb($redirect->getHttpResponseCode() === 302, 'Blocked navigation redirects to the canonical gate');
     $destination = parse_url($redirect->getHeader('Location')->getFieldValue());
-    checkAb(str_contains($destination['path'], '/antidetectbrowser/gate/index'), 'Redirect targets the native gate action');
+    checkAb(str_contains($destination['path'], '/hideguard/gate/index'), 'Redirect targets the native gate action');
     parse_str($destination['query'] ?? '', $query);
     checkAb(base64_decode($query['return'], true) === $returnPath, 'Redirect preserves the original internal path and query');
     checkAb($redirect->getBody() === '', 'Blocked navigation sends no original page HTML');
     checkAb(str_contains($redirect->getHeader('Cache-Control')->getFieldValue(), 'no-store'), 'Block redirect cannot be cached');
     $request->setPathInfo($destination['path'])->setRequestUri($destination['path'] . '?' . $destination['query'])
-        ->setRouteName('antidetectbrowser')->setControllerName('gate')->setActionName('index')
+        ->setRouteName('hideguard')->setControllerName('gate')->setActionName('index')
         ->setParam('return', $query['return']);
     $blockedPage = $pageAccess->aroundDispatch($frontController,
         fn() => $om->create(\Hachitechs\Hideguard\Controller\Gate\Index::class)->execute(), $request);
@@ -507,7 +507,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
         'check' => \Hachitechs\Hideguard\Controller\Access\Check::class,
         'Verdict' => \Hachitechs\Hideguard\Controller\Access\Verdict::class,
     ] as $action => $controller) {
-        $request->setMethod('POST')->setPathInfo('/antidetectbrowser/access/' . $action)->setActionName($action);
+        $request->setMethod('POST')->setPathInfo('/hideguard/access/' . $action)->setActionName($action);
         $request->setParam('form_key', $om->get(\Magento\Framework\Data\Form\FormKey::class)->getFormKey());
         $request->setParam('verdict', 'block')->setParam('visitorId', 'http-block-visitor');
         $json = $om->create($controller)->execute();
@@ -683,7 +683,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $request->getHeaders()->addHeaderLine('X-Requested-With', 'XMLHttpRequest');
     $blockedAction = $om->create(\Hachitechs\Hideguard\Model\DeniedResponse::class)->create($request, $backendBlock);
     checkAb($blockedAction->getHttpResponseCode() === 401
-        && $blockedAction->getHeader('X-Hachitech-Antidetect')->getFieldValue() === 'denied',
+        && $blockedAction->getHeader('X-Hachitech-HideGuard')->getFieldValue() === 'denied',
         'An action Block returns 401 and the common frontend gate signal');
     $request->getHeaders()->removeHeader($request->getHeaders()->get('X-Requested-With'));
     $request->getServer()->set('HTTP_REFERER', $stores->getStore()->getBaseUrl() . 'customer/account/login/');

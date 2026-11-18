@@ -364,7 +364,7 @@ class StateRepository implements
      */
     private function table(string $suffix): string
     {
-        return $this->resource->getTableName('hachitech_antidetect_' . $suffix);
+        return $this->resource->getTableName('hachitech_hideguard_' . $suffix);
     }
 
     /** Release PDO-bound helpers when Magento closes its resource connection between requests. */
