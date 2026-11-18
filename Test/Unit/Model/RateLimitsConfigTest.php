@@ -40,7 +40,7 @@ class RateLimitsConfigTest extends TestCase
     {
         $config = $this->config();
         $settings = $config->settings(1);
-        $before = new \Hachitechs\HideguardPhp\Configuration\ProtectionPolicy(accessPoints: Config::ACCESS_POINTS);
+        $before = new \Hachitechs\HideguardPhp\Configuration\ProtectionPolicy(environment: Config::ENVIRONMENT, accessPoints: Config::ACCESS_POINTS);
         self::assertEquals(new RateLimits(), $config->policy(1)->limits);
         self::assertSame($before->fingerprint(), $config->policy(1)->fingerprint());
         $settings['limits'] = ['scopeRequests' => 999999, 'windowSeconds' => 123];
@@ -65,13 +65,15 @@ class RateLimitsConfigTest extends TestCase
         self::assertNotSame($config->policy(7)->fingerprint(), $config->policy(8)->fingerprint());
         $settings = $config->settings(7);
         $settings['enabled'] = true;
-        $settings['keys']['development']['publicKey'] = 'fixture';
+        $settings['keys']['production']['publicKey'] = 'fixture';
+        $settings['keys']['production']['signaturePublicKey'] = 'signature';
         $changed = $config->toPolicy($settings);
         $original = $this->config()->settings(7);
         $original['enabled'] = true;
-        $original['keys']['development']['publicKey'] = 'fixture';
+        $original['keys']['production']['publicKey'] = 'fixture';
+        $original['keys']['production']['signaturePublicKey'] = 'signature';
         $old = $this->config()->toPolicy($original);
-        $state = new BrowserState('fixture', grantedUntil: 1300, policyHash: $old->fingerprint());
+        $state = new BrowserState('fixture', grantedUntil: 1300, verification: 'verified', policyHash: $old->fingerprint());
         self::assertTrue($old->grants($state, null, 1000));
         self::assertFalse($changed->grants($state, null, 1000));
     }
@@ -123,7 +125,7 @@ class RateLimitsConfigTest extends TestCase
                 self::assertSame('1', (string)$field[$flag]);
             }
         }
-        self::assertSame(['enabled', 'environment', 'protected_paths', 'block_duration',
+        self::assertSame(['enabled', 'public_key', 'api_key', 'signature_public_key', 'protected_paths', 'block_duration',
             'pass_duration', 'debug', 'reset_blocks'], $ids);
         $defaults = simplexml_load_file(dirname(__DIR__, 3) . '/etc/config.xml')
             ->default->hachitech_antidetectbrowser->general;

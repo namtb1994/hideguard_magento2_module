@@ -86,9 +86,8 @@ class Bootstrap extends Template
             'enabled' => $enabled, 'points' => $settings['points'], 'page' => $page,
             'pageProtected' => $pageProtected, 'initialState' => $initialState,
             'verificationId' => $state['verificationId'] ?? null,
-            'endpointUrl' => $settings['keys'][$settings['environment']]['endpointUrl']
-                ?? ProtectionPolicy::DEFAULT_ENDPOINT_URL,
-            'publicKey' => $settings['keys'][$settings['environment']]['publicKey'],
+            'endpointUrl' => ProtectionPolicy::defaultEndpointUrl(Config::ENVIRONMENT),
+            'publicKey' => $settings['keys'][Config::ENVIRONMENT]['publicKey'],
             'accessUrl' => $this->getUrl('antidetectbrowser/access/check', ['_secure' => true]),
             'verdictUrl' => $this->getUrl('antidetectbrowser/access/verdict', ['_secure' => true]),
             'failUrl' => $this->getUrl('antidetectbrowser/access/fail', ['_secure' => true]),

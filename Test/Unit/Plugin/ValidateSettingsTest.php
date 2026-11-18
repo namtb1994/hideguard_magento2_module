@@ -17,13 +17,13 @@ class ValidateSettingsTest extends TestCase
     private const KEY = "-----BEGIN PUBLIC KEY-----\n"
         . "MCowBQYDK2VwAyEAQXLS7j+tppqbZp00nnr78na3G6llNj62E3QG9zDCFaI=\n-----END PUBLIC KEY-----";
 
-    private function validator(array $groups, ?Config $config = null): array
+    private function validator(array $groups, ?Config $config = null, ?array $parentSettings = null): array
     {
-        $settings = ['enabled' => false, 'environment' => 'development', 'points' => ['all_pages'],
+        $settings = ['enabled' => false, 'environment' => Config::ENVIRONMENT, 'points' => ['all_pages'],
             'pageRules' => [], 'blockDuration' => 3600, 'passDuration' => 0,
-            'keys' => array_fill_keys(ProtectionPolicy::ENVIRONMENTS, [
+            'keys' => [Config::ENVIRONMENT => [
                 'publicKey' => '', 'signaturePublicKey' => '', 'endpointUrl' => ProtectionPolicy::DEFAULT_ENDPOINT_URL,
-            ])];
+            ]]];
         if ($config === null) {
             $deployment = $this->createStub(\Magento\Framework\App\DeploymentConfig::class);
             $deployment->method('get')->willReturnCallback(fn($key, $default = null) => $default);
@@ -36,36 +36,30 @@ class ValidateSettingsTest extends TestCase
                 $this->createStub(\Magento\Framework\Encryption\EncryptorInterface::class), $runtime,
             ])->onlyMethods(['read'])->getMock();
         }
-        $config->method('read')->willReturn($settings);
+        $config->method('read')->willReturnCallback(
+            fn($scope) => $scope === 'default' && $parentSettings !== null ? $parentSettings : $settings
+        );
         $subject = $this->getMockBuilder(SystemConfig::class)->disableOriginalConstructor()
             ->onlyMethods([])->getMock();
         $subject->setData(['section' => Config::SECTION, 'groups' => $groups]);
         return [new ValidateSettings($config, $this->createMock(StoreManagerInterface::class)), $subject];
     }
 
-    public function testLegacyEndpointAndPointsPostAreIgnored(): void
+    public function testLegacyEnvironmentEndpointAndPointsPostAreIgnored(): void
     {
         $config = $this->getMockBuilder(Config::class)->disableOriginalConstructor()
             ->onlyMethods(['read', 'toPolicy'])->getMock();
-        $config->expects(self::exactly(3))->method('toPolicy')->with(self::callback(
+        $config->expects(self::once())->method('toPolicy')->with(self::callback(
             fn(array $settings) => $settings['points'] === ['all_pages']
-                && $settings['keys']['development']['endpointUrl'] === ProtectionPolicy::DEFAULT_ENDPOINT_URL
+                && $settings['environment'] === 'production'
+                && $settings['keys']['production']['endpointUrl'] === ProtectionPolicy::DEFAULT_ENDPOINT_URL
         ))->willReturn(new ProtectionPolicy());
         [$validator, $subject] = $this->validator(['general' => [
-            'fields' => ['protected_points' => ['value' => []]],
+            'fields' => ['protected_points' => ['value' => []], 'environment' => ['value' => 'staging']],
             'groups' => ['development' => ['fields' => [
                 'endpoint_url' => ['value' => 'http://forged.example/path'],
             ]]],
         ]], $config);
-        $validator->beforeSave($subject);
-    }
-
-    public function testStagingPostIsRejected(): void
-    {
-        [$validator, $subject] = $this->validator(['general' => [
-            'fields' => ['environment' => ['value' => 'staging']],
-        ]]);
-        $this->expectException(LocalizedException::class);
         $validator->beforeSave($subject);
     }
 
@@ -76,72 +70,56 @@ class ValidateSettingsTest extends TestCase
         $validator->beforeSave($subject);
     }
 
-    public function testEnableWithNewDevelopmentKeyInSameSaveIsAccepted(): void
+    public function testEnableWithBothKeysInSameSaveIsAccepted(): void
     {
-        [$validator, $subject] = $this->validator([
-            'general' => [
-                'fields' => ['enabled' => ['value' => '1']],
-                'groups' => ['development' => ['fields' => [
-                    'public_key' => ['value' => 'site-key'], 'signature_public_key' => ['value' => self::KEY],
-                ]]],
-            ],
-        ]);
+        [$validator, $subject] = $this->validator(['general' => ['fields' => [
+            'enabled' => ['value' => '1'],
+            'public_key' => ['value' => 'site-key'],
+            'signature_public_key' => ['value' => self::KEY],
+        ]]]);
         $validator->beforeSave($subject);
         self::assertTrue(true);
     }
 
-    public function testProductionRequiresItsOwnSignatureKey(): void
-    {
-        [$validator, $subject] = $this->validator([
-            'general' => [
-                'fields' => ['enabled' => ['value' => '1'], 'environment' => ['value' => 'production']],
-                'groups' => [
-                    'production' => ['fields' => ['public_key' => ['value' => 'site-key']]],
-                    'development' => ['fields' => ['signature_public_key' => ['value' => 'different-profile']]],
-                ],
-            ],
-        ]);
-        $this->expectException(LocalizedException::class);
-        $validator->beforeSave($subject);
-    }
-
-    public function testEnableProductionWithBothNestedKeysInSameSaveIsAccepted(): void
-    {
-        [$validator, $subject] = $this->validator([
-            'general' => [
-                'fields' => ['enabled' => ['value' => '1'], 'environment' => ['value' => 'production']],
-                'groups' => ['production' => ['fields' => [
-                    'public_key' => ['value' => 'site-key'],
-                    'signature_public_key' => ['value' => self::KEY],
-                ]]],
-            ],
-        ]);
-        $validator->beforeSave($subject);
-        self::assertTrue(true);
-    }
-
-    /** @dataProvider invalidSignatureProfiles */
-    public function testEveryEnabledEnvironmentRequiresAnEd25519PemKey(string $environment, string $key): void
+    public function testOldProfilePostsCannotSupplyTheRequiredSignature(): void
     {
         [$validator, $subject] = $this->validator(['general' => [
-            'fields' => ['enabled' => ['value' => '1'], 'environment' => ['value' => $environment]],
-            'groups' => [$environment => ['fields' => [
-                'public_key' => ['value' => 'site-key'], 'signature_public_key' => ['value' => $key],
-            ]]],
+            'fields' => ['enabled' => ['value' => '1'], 'public_key' => ['value' => 'site-key']],
+            'groups' => ['development' => ['fields' => ['signature_public_key' => ['value' => self::KEY]]]],
         ]]);
         $this->expectException(LocalizedException::class);
         $validator->beforeSave($subject);
     }
 
-    public static function invalidSignatureProfiles(): array
+    /** @dataProvider invalidSignatureKeys */
+    public function testEnablingRequiresAnEd25519PemKey(string $key): void
     {
-        $cases = [];
-        foreach (ProtectionPolicy::ENVIRONMENTS as $environment) {
-            foreach (['', 'invalid-key', str_replace('PUBLIC KEY', 'PRIVATE KEY', self::KEY)] as $key) {
-                $cases[] = [$environment, $key];
-            }
-        }
-        return $cases;
+        [$validator, $subject] = $this->validator(['general' => ['fields' => [
+            'enabled' => ['value' => '1'],
+            'public_key' => ['value' => 'site-key'],
+            'signature_public_key' => ['value' => $key],
+        ]]]);
+        $this->expectException(LocalizedException::class);
+        $validator->beforeSave($subject);
+    }
+
+    public static function invalidSignatureKeys(): array
+    {
+        return [[''], ['invalid-key'], [str_replace('PUBLIC KEY', 'PRIVATE KEY', self::KEY)]];
+    }
+
+    public function testCredentialsCanInheritParentValuesWhenEnabling(): void
+    {
+        [$validator, $subject] = $this->validator(['general' => ['fields' => [
+            'enabled' => ['value' => '1'],
+            'public_key' => ['inherit' => '1', 'value' => ''],
+            'signature_public_key' => ['inherit' => '1', 'value' => 'invalid'],
+        ]]], parentSettings: ['keys' => ['production' => [
+            'publicKey' => 'parent-site-key', 'signaturePublicKey' => self::KEY,
+        ]]]);
+        $subject->setWebsite(2);
+        $validator->beforeSave($subject);
+        self::assertTrue(true);
     }
 
     public function testLegacyUnknownPointIsIgnored(): void
@@ -186,11 +164,11 @@ class ValidateSettingsTest extends TestCase
         self::assertTrue(true);
     }
 
-    public function testPostedPathsKeepZeroInEffectiveAndDormantProfiles(): void
+    public function testPostedPathsKeepZeroInEffectivePolicy(): void
     {
         $config = $this->getMockBuilder(Config::class)->disableOriginalConstructor()
             ->onlyMethods(['read', 'toPolicy'])->getMock();
-        $config->expects(self::exactly(3))->method('toPolicy')->with(self::callback(
+        $config->expects(self::once())->method('toPolicy')->with(self::callback(
             fn(array $settings) => $settings['pageRules'] === ['0', 'Campaign/*']
         ))->willReturn(new ProtectionPolicy());
         [$validator, $subject] = $this->validator([

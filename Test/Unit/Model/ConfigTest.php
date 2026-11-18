@@ -42,7 +42,7 @@ class ConfigTest extends TestCase
     {
         $scope = $this->createMock(ScopeConfigInterface::class);
         $scope->method('getValue')->willReturnMap([
-            [Config::SECTION . '/general/environment', ScopeInterface::SCOPE_STORE, 7, 'production'],
+            [Config::SECTION . '/general/environment', ScopeInterface::SCOPE_STORE, 7, 'development'],
             [Config::SECTION . '/production/api_key', ScopeInterface::SCOPE_STORE, 7, 'encrypted-secret'],
         ]);
         $encryptor = $this->createMock(EncryptorInterface::class);
@@ -53,7 +53,7 @@ class ConfigTest extends TestCase
     }
 
     /** @dataProvider environments */
-    public function testActiveEnvironmentProfileReachesCorePolicy(string $environment): void
+    public function testStoredEnvironmentCannotChangeLivePolicy(string $environment): void
     {
         $values = [
             'general/enabled' => '1',
@@ -71,17 +71,16 @@ class ConfigTest extends TestCase
 
         $policy = ($this->config($scope))->policy(7);
 
-        self::assertSame($environment, $policy->environment);
-        self::assertSame($environment === 'production' ? 'https://hideguard.io' : 'https://dev.hideguard.io',
-            $policy->endpointUrl);
+        self::assertSame('production', $policy->environment);
+        self::assertSame('https://hideguard.io', $policy->endpointUrl);
         self::assertSame(Config::ACCESS_POINTS, $policy->accessPoints);
-        self::assertSame('sdk-' . $environment, $policy->publicKey);
-        self::assertSame('signature-' . $environment, $policy->signaturePublicKey);
+        self::assertSame('sdk-production', $policy->publicKey);
+        self::assertSame('signature-production', $policy->signaturePublicKey);
     }
 
     public static function environments(): array
     {
-        return [['development'], ['production']];
+        return [['development'], ['staging'], ['production'], [''], ['invalid']];
     }
 
     public function testLegacyUrlsPointsAndSettingsInjectionCannotChangeEffectiveProtection(): void
@@ -90,9 +89,12 @@ class ConfigTest extends TestCase
         $scope->method('getValue')->willReturnCallback(function (string $path) {
             self::assertFalse(str_ends_with($path, '/endpoint_url'), 'Legacy URL must not be read.');
             self::assertFalse(str_ends_with($path, '/protected_points'), 'Legacy points must not be read.');
+            self::assertFalse(str_ends_with($path, '/environment'), 'Removed environment must not be read.');
+            self::assertStringNotContainsString('/development/', $path);
             return match ($path) {
                 Config::SECTION . '/general/enabled' => '1',
-                Config::SECTION . '/development/public_key' => 'fixture',
+                Config::SECTION . '/production/public_key' => 'fixture',
+                Config::SECTION . '/production/signature_public_key' => 'signature',
                 Config::SECTION . '/general/protected_paths' => "contact\nCampaign/*",
                 default => null,
             };
@@ -102,22 +104,44 @@ class ConfigTest extends TestCase
         self::assertSame(['contact', 'Campaign/*'], $settings['pageRules']);
         self::assertSame(Config::ACCESS_POINTS, $settings['points']);
         $settings['points'] = [];
-        $settings['keys']['development']['endpointUrl'] = 'https://forged.example';
+        $settings['keys']['production']['endpointUrl'] = 'https://forged.example';
         $policy = $config->toPolicy($settings);
-        self::assertSame('https://dev.hideguard.io', $policy->endpointUrl);
+        self::assertSame('https://hideguard.io', $policy->endpointUrl);
         self::assertSame(Config::ACCESS_POINTS, $policy->accessPoints);
         foreach (['cart', 'checkout', 'payment', 'complete_order', 'login', 'form.submit'] as $action) {
             self::assertTrue($policy->protects($action));
         }
     }
 
-    public function testLegacyStagingCannotBeUsedAsANewMagentoMode(): void
+    /** @dataProvider environments */
+    public function testInjectedEnvironmentCannotChangeLivePolicy(string $environment): void
     {
         $config = $this->config($this->createStub(ScopeConfigInterface::class));
         $settings = $config->settings(7);
-        $settings['environment'] = 'staging';
-        $this->expectException(GuardException::class);
-        $config->toPolicy($settings);
+        $settings['environment'] = $environment;
+        $settings['keys']['production']['endpointUrl'] = 'https://forged.example';
+        $policy = $config->toPolicy($settings);
+        self::assertSame('production', $policy->environment);
+        self::assertSame('https://hideguard.io', $policy->endpointUrl);
+    }
+
+    public function testAdminCredentialsPreservePathsEncryptionAndDashboardAccess(): void
+    {
+        $xml = simplexml_load_file(dirname(__DIR__, 3) . '/etc/adminhtml/system.xml');
+        $group = $xml->system->section->group;
+        self::assertCount(0, $group->xpath('field[@id="environment"] | group'));
+        foreach (['public_key', 'api_key', 'signature_public_key'] as $name) {
+            $field = $group->xpath('field[@id="' . $name . '"]')[0];
+            self::assertSame(Config::SECTION . '/production/' . $name, (string)$field->config_path);
+            foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $scope) {
+                self::assertSame('1', (string)$field[$scope]);
+            }
+        }
+        $apiKey = $group->xpath('field[@id="api_key"]')[0];
+        self::assertSame('obscure', (string)$apiKey['type']);
+        self::assertSame(\Magento\Config\Model\Config\Backend\Encrypted::class, (string)$apiKey->backend_model);
+        self::assertStringContainsString('href="https://hideguard.io/dashboard/"', (string)$apiKey->comment);
+        self::assertStringContainsString('rel="noopener noreferrer"', (string)$apiKey->comment);
     }
 
     private function config(ScopeConfigInterface $scope): Config

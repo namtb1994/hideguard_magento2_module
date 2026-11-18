@@ -4,7 +4,6 @@
         <hachitech_antidetectbrowser>
             <general>
                 <enabled>0</enabled>
-                <environment>production</environment>
                 <block_duration>900</block_duration>
                 <pass_duration>0</pass_duration>
                 <debug>0</debug>

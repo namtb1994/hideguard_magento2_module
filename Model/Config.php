@@ -15,6 +15,7 @@ use Magento\Store\Model\ScopeInterface;
 class Config
 {
     public const SECTION = 'hachitech_antidetectbrowser';
+    public const ENVIRONMENT = 'production';
     public const ACCESS_POINTS = ['all_pages', 'complete_order'];
 
     /**
@@ -52,9 +53,8 @@ class Config
      */
     public function apiKey(int $storeId): string
     {
-        $environment = $this->settings($storeId)['environment'];
         $encrypted = (string)$this->scopeConfig->getValue(
-            self::SECTION . '/' . $environment . '/api_key',
+            self::SECTION . '/' . self::ENVIRONMENT . '/api_key',
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
@@ -82,21 +82,18 @@ class Config
     public function read(string $scope, $scopeId): array
     {
         $read = fn(string $path) => $this->scopeConfig->getValue(self::SECTION . '/' . $path, $scope, $scopeId);
-        $keys = [];
-        foreach (ProtectionPolicy::ENVIRONMENTS as $environment) {
-            $keys[$environment] = [
-                'endpointUrl' => ProtectionPolicy::defaultEndpointUrl($environment),
-                'publicKey' => trim((string)$read($environment . '/public_key')),
-                'signaturePublicKey' => trim((string)$read($environment . '/signature_public_key')),
-            ];
-        }
+        $keys = [self::ENVIRONMENT => [
+            'endpointUrl' => ProtectionPolicy::defaultEndpointUrl(self::ENVIRONMENT),
+            'publicKey' => trim((string)$read(self::ENVIRONMENT . '/public_key')),
+            'signaturePublicKey' => trim((string)$read(self::ENVIRONMENT . '/signature_public_key')),
+        ]];
         $runtimeStoreId = $this->runtime->storeIdForScope($scope, $scopeId);
         $limits = $this->runtime->limits($runtimeStoreId);
         return [
             '_runtime_store_id' => $runtimeStoreId,
             'circuit' => $this->runtime->circuit(),
             'enabled' => (bool)$read('general/enabled'),
-            'environment' => (string)($read('general/environment') ?: 'development'),
+            'environment' => self::ENVIRONMENT,
             'points' => self::ACCESS_POINTS,
             'pageRules' => $this->normalizePaths((string)$read('general/protected_paths')),
             'blockDuration' => (int)($read('general/block_duration') ?? 3600),
@@ -147,13 +144,10 @@ class Config
      */
     public function toPolicy(array $settings): ProtectionPolicy
     {
-        if (!in_array($settings['environment'], ProtectionPolicy::ENVIRONMENTS, true)) {
-            throw new GuardException(FailureReason::InvalidConfiguration, 'Select Testing or Production.');
-        }
-        $keys = $settings['keys'][$settings['environment']] ?? ['publicKey' => '', 'signaturePublicKey' => ''];
+        $keys = $settings['keys'][self::ENVIRONMENT] ?? ['publicKey' => '', 'signaturePublicKey' => ''];
         return new ProtectionPolicy(
             enabled: $settings['enabled'],
-            environment: $settings['environment'],
+            environment: self::ENVIRONMENT,
             publicKey: $keys['publicKey'],
             signaturePublicKey: $keys['signaturePublicKey'],
             accessPoints: self::ACCESS_POINTS,

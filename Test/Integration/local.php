@@ -96,10 +96,8 @@ foreach ($schema->table as $declaration) {
 $config = new class($om->get(\Magento\Framework\App\Config\ScopeConfigInterface::class), $om->get(\Magento\Framework\Encryption\EncryptorInterface::class), $om->get(\Hachitechs\Hideguard\Model\Config\RuntimeSettings::class)) extends Config {
     public bool $debug = true;
     public array $value = [
-        'enabled' => true, 'environment' => 'development', 'points' => ['all_pages', 'complete_order'],
+        'enabled' => true, 'environment' => 'production', 'points' => ['all_pages', 'complete_order'],
         'pageRules' => [], 'blockDuration' => 900, 'passDuration' => 0, 'keys' => [
-            'development' => ['publicKey' => 'test-key', 'signaturePublicKey' => ''],
-            'staging' => ['publicKey' => 'stage-key', 'signaturePublicKey' => 'response-key'],
             'production' => ['publicKey' => 'production-key', 'signaturePublicKey' => 'response-key'],
         ],
     ];
@@ -122,7 +120,7 @@ $signingSecret = sodium_crypto_sign_secretkey($signingPair);
 $signatureKey = "-----BEGIN PUBLIC KEY-----\n" . base64_encode(
     hex2bin('302a300506032b6570032100') . sodium_crypto_sign_publickey($signingPair)
 ) . "\n-----END PUBLIC KEY-----";
-foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
+foreach ([Config::ENVIRONMENT] as $environment) {
     $config->value['keys'][$environment]['signaturePublicKey'] = $signatureKey;
     $config->value['keys'][$environment]['endpointUrl'] = \Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::defaultEndpointUrl($environment);
 }
@@ -293,7 +291,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $config->value['passDuration'] = 0;
 
     $identity->customer = 0;
-    foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
+    foreach ([Config::ENVIRONMENT] as $environment) {
         $config->value['environment'] = $environment;
         $identity->browser = 'signed-' . $environment;
         checkAb(reportAb($access, $storeId, $signed('allow', 'signed-' . $environment))['status'] === 'allowed',
@@ -308,7 +306,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
             && $access->pageStatus($storeId)['status'] === $challengeStatus,
             'Signed Challenge follows the configured verdict group in ' . $environment);
     }
-    $config->value['environment'] = 'development';
+    $config->value['environment'] = 'production';
     $identity->browser = 'rate-test';
     $identity->customer = 0;
     for ($i = 0; $i < 60; $i++) { $access->status($storeId); }
@@ -322,7 +320,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     $instances[Access::class] = $access;
     $shared->setValue($om, $instances);
 
-    foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
+    foreach ([Config::ENVIRONMENT] as $environment) {
         $config->value['environment'] = $environment;
         $policies = $om->get(\Magento\Csp\Api\PolicyCollectorInterface::class)->collect();
         checkAb(in_array('base-uri', array_map(fn($policy) => $policy->getId(), $policies), true),
@@ -332,15 +330,17 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
             $matches = array_values(array_filter($policies, fn($policy) => $policy->getId() === $directive));
             checkAb(count($matches) === 1 && in_array($endpoint, $matches[0]->getHostSources(), true),
                 'Native CSP allows the active ' . $environment . ' HideGuard origin for ' . $directive);
-            $inactive = $environment === 'production' ? 'https://dev.hideguard.io' : 'https://hideguard.io';
-            checkAb(!in_array($inactive, $matches[0]->getHostSources(), true),
-                'Native CSP does not retain the inactive mode origin');
+            $hideguardOrigins = array_values(array_filter(
+                $matches[0]->getHostSources(),
+                static fn($origin) => str_contains($origin, 'hideguard.io')
+            ));
+            checkAb($hideguardOrigins === [$endpoint], 'Native CSP only allows the live HideGuard origin');
         }
         $browserConfig = $om->create(\Hachitechs\Hideguard\Block\Bootstrap::class)->getBrowserConfig();
         checkAb($browserConfig['endpointUrl'] === $endpoint, 'Native browser config uses the active environment URL');
         checkAb(!isset($browserConfig['signaturePublicKey']), 'Signature public key remains server-side');
     }
-    $config->value['environment'] = 'development';
+    $config->value['environment'] = 'production';
 
     // DI, real schema validation and rendered gate, with module enabled only in this process.
     foreach ([\Hachitechs\Hideguard\Plugin\PageAccess::class,
@@ -367,8 +367,8 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     ), $config->policy($storeId))->status === $access->pageStatus($storeId)['status'],
         'Native DI Guard reads the same mapped storage as the platform adapter');
     $structure = $om->get('adminhtmlConfigStructure');
-    $environmentPath = Config::SECTION . '/general/environment';
-    $environmentOrder = (int)$structure->getElement($environmentPath)->getData()['sortOrder'];
+    checkAb(!isset($structure->getElement(Config::SECTION . '/general')->getData()['children']['environment']),
+        'Environment selector is absent from Admin');
     $pointsOrder = (int)$structure->getElement(Config::SECTION . '/general/protected_paths')->getData()['sortOrder'];
     $debugField = $structure->getElement(Config::SECTION . '/general/debug')->getData();
     checkAb(($debugField['type'] ?? null) === 'select'
@@ -379,22 +379,17 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $scope) {
         checkAb(($debugField[$scope] ?? null) === '1', 'Debug Log supports ' . $scope);
     }
-    foreach (\Hachitechs\HideguardPhp\Configuration\ProtectionPolicy::ENVIRONMENTS as $environment) {
-        $groupPath = Config::SECTION . '/general/' . $environment;
-        $group = $structure->getElement($groupPath)->getData();
-        $field = $structure->getElement($groupPath . '/signature_public_key')->getData();
-        checkAb(!isset($group['children']['endpoint_url']), 'HideGuard URL is absent from Admin');
-        checkAb(($field['type'] ?? null) === 'textarea'
-            && ($field['config_path'] ?? null) === Config::SECTION . '/' . $environment . '/signature_public_key',
-            'Admin signature field maps to the ' . $environment . ' key');
-        checkAb(($group['depends']['fields'][$environmentPath]['value'] ?? null) === $environment,
-            'Admin key group depends on the selected environment');
-        checkAb((int)$group['sortOrder'] > $environmentOrder && (int)$group['sortOrder'] < $pointsOrder,
-            'Admin key group appears directly below Environment');
+    foreach (['public_key', 'api_key', 'signature_public_key'] as $name) {
+        $field = $structure->getElement(Config::SECTION . '/general/' . $name)->getData();
+        checkAb(($field['config_path'] ?? null) === Config::SECTION . '/production/' . $name,
+            'Admin credential keeps its existing storage path');
+        checkAb((int)$field['sortOrder'] < $pointsOrder, 'Credentials appear before path rules');
         foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $scope) {
-            checkAb(($field[$scope] ?? null) === '1', 'Admin signature key supports ' . $scope);
+            checkAb(($field[$scope] ?? null) === '1', 'Admin credential supports ' . $scope);
         }
     }
+    checkAb(str_contains((string)$structure->getElement(Config::SECTION . '/general/api_key')->getData()['comment'],
+        'https://hideguard.io/dashboard/'), 'API Key links to the HideGuard dashboard');
     $urn = $om->get(\Magento\Framework\Config\Dom\UrnResolver::class);
     libxml_set_external_entity_loader([$urn, 'registerEntityLoader']);
     foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator(dirname(__DIR__, 2))) as $file) {
@@ -434,7 +429,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
         'Synchronous transport barrier precedes native RequireJS configuration');
     checkAb(str_contains($earlyHtml, 'var BASE_URL') && str_contains($earlyHtml, 'var require'),
         'Wrapper retains the native Magento RequireJS template and variables');
-    checkAb(str_contains($earlyHtml, 'assetUrls') && !str_contains($earlyHtml, 'test-key')
+    checkAb(str_contains($earlyHtml, 'assetUrls') && !str_contains($earlyHtml, 'production-key')
         && !str_contains($earlyHtml, 'BEGIN PUBLIC KEY'), 'Early barrier exposes routing only, no keys or access grant');
     $config->value['enabled'] = false;
     checkAb($requestGate->toHtml() === '', 'Disabled module installs no transport barrier');
@@ -462,7 +457,7 @@ $quote = $om->create(\Magento\Quote\Model\Quote::class)->setId(987654321)->setSt
     checkAb(!str_contains($response->getBody(), 'interaction-lock.js'), 'Interaction lock is loaded through AMD rather than a direct script tag');
     checkAb(str_contains($response->getBody(), 'type="text/x-magento-init"'), 'Frontend uses Magento declarative initialization');
     checkAb(str_contains($response->getBody(), 'Hachitechs_Hideguard\\/js\\/access'), 'Gate initializes frontend verification');
-    checkAb(str_contains($response->getBody(), 'test-key'), 'Only active SDK public key is rendered');
+    checkAb(str_contains($response->getBody(), 'production-key'), 'Only active SDK public key is rendered');
     checkAb(!str_contains($response->getBody(), 'stage-key') && !str_contains($response->getBody(), 'BEGIN PUBLIC KEY'),
         'Inactive and signature keys stay off storefront');
     checkAb(str_contains($response->getHeader('Cache-Control')->getFieldValue(), 'no-store'), 'Gate HTML cannot be cached');
@@ -905,7 +900,7 @@ WORKER;
     echo "PASS: isolated protection transaction survives checkout rollback; native order/payment callbacks denied on Block/outage; authenticated Challenge allowed; auth services registered.\n";
     echo "PASS: Native dedicated debug log, store-scoped transport factory, request/response correlation, HTTP status, redaction and off switch.\n";
     echo "PASS: VerdictClient authenticated API flow, cached-pass refresh, sticky shared Block, scoped operation reuse, quote binding, outage revocation, visitor mismatch and signed browser isolation.\n";
-    echo "PASS: environment HideGuard URLs, dynamic CSP, admin fields, Ed25519 signatures, production HTTP/revocation, grants, blocks, reset, expiry, quote/customer binding, rate limits, DI, XSD, cache plugin order, initial lock rendering, HTTP 401 and block expiry.\n";
+    echo "PASS: live HideGuard URL, CSP, admin fields, Ed25519 signatures, production HTTP/revocation, grants, blocks, reset, expiry, quote/customer binding, rate limits, DI, XSD, cache plugin order, initial lock rendering, HTTP 401 and block expiry.\n";
 } finally {
     foreach ($tables as $name) { $db->dropTemporaryTable($name); }
     $om->get(\Magento\Framework\Filesystem\Driver\File::class)->deleteDirectory($cachePath);

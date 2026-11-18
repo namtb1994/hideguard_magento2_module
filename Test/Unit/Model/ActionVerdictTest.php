@@ -79,12 +79,12 @@ class ActionVerdictTest extends TestCase
     }
 
     /** @dataProvider modeEndpoints */
-    public function testBothModesStillCallFreshBackendVerdictsAtTheirFixedHost(string $mode, string $host): void
+    public function testLegacyModesStillCallFreshBackendVerdictsAtTheLiveHost(string $mode, string $host): void
     {
         $scope = $this->createStub(\Magento\Framework\App\Config\ScopeConfigInterface::class);
         $values = ['general/enabled' => '1', 'general/environment' => $mode,
-            $mode . '/public_key' => 'fixture-key', $mode . '/signature_public_key' => 'fixture-signature',
-            $mode . '/api_key' => 'encrypted-fixture', $mode . '/endpoint_url' => 'https://legacy.example'];
+            'production/public_key' => 'fixture-key', 'production/signature_public_key' => 'fixture-signature',
+            'production/api_key' => 'encrypted-fixture', $mode . '/endpoint_url' => 'https://legacy.example'];
         $scope->method('getValue')->willReturnCallback(
             fn($path) => $values[substr($path, strlen(Config::SECTION) + 1)] ?? null
         );
@@ -106,7 +106,8 @@ class ActionVerdictTest extends TestCase
 
     public static function modeEndpoints(): array
     {
-        return [['development', 'https://dev.hideguard.io'], ['production', 'https://hideguard.io']];
+        return [['development', 'https://hideguard.io'], ['staging', 'https://hideguard.io'],
+            ['production', 'https://hideguard.io']];
     }
 
     public function testNativeCartPredispatchAndServiceUseOneFreshApiCallPerInvocation(): void

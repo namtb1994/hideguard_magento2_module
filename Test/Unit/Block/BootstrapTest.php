@@ -32,8 +32,8 @@ class BootstrapTest extends TestCase
     ): Bootstrap {
         $config = $this->createMock(Config::class);
         $config->method('settings')->willReturn([
-            'enabled' => $enabled, 'points' => $points, 'environment' => 'development',
-            'keys' => ['development' => ['publicKey' => 'public-test-key', 'endpointUrl' => $endpointUrl]],
+            'enabled' => $enabled, 'points' => $points, 'environment' => 'production',
+            'keys' => ['production' => ['publicKey' => 'public-test-key', 'endpointUrl' => $endpointUrl]],
         ]);
         $rules = $this->createMock(PageRules::class);
         $rules->method('protects')->willReturn($protected);
@@ -64,11 +64,11 @@ class BootstrapTest extends TestCase
         return $access;
     }
 
-    public function testStoreEndpointIsForwardedToTheBrowser(): void
+    public function testBrowserEndpointIsFixedToTheLiveHost(): void
     {
         $block = $this->block($this->accessPending(), $this->createMock(PageConfig::class),
             endpointUrl: 'https://store.hideguard.example:8443');
-        self::assertSame('https://store.hideguard.example:8443', $block->getBrowserConfig()['endpointUrl']);
+        self::assertSame('https://hideguard.io', $block->getBrowserConfig()['endpointUrl']);
         self::assertArrayNotHasKey('signaturePublicKey', $block->getBrowserConfig());
     }
 

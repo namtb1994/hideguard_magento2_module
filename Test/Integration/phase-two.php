@@ -69,10 +69,10 @@ $structure = $om->get(Magento\Config\Model\Config\Structure::class);
 $general = $structure->getElement(Config::SECTION . '/general')->getData();
 $fields = $general['children'] ?? [];
 checkPhaseTwo($fields !== [], 'Admin Protection group must not be empty');
-foreach ([...RuntimeSettings::LEGACY_ADMIN_FIELDS, 'protected_points'] as $field) {
+foreach ([...RuntimeSettings::LEGACY_ADMIN_FIELDS, 'protected_points', 'environment', 'development', 'production'] as $field) {
     checkPhaseTwo(!isset($fields[$field]), 'Legacy technical field still visible: ' . $field);
 }
-foreach (['enabled', 'environment', 'protected_paths', 'block_duration', 'pass_duration',
+foreach (['enabled', 'public_key', 'api_key', 'signature_public_key', 'protected_paths', 'block_duration', 'pass_duration',
     'debug', 'reset_blocks'] as $field) {
     $data = $structure->getElement(Config::SECTION . '/general/' . $field)->getData();
     foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $flag) {
@@ -81,30 +81,24 @@ foreach (['enabled', 'environment', 'protected_paths', 'block_duration', 'pass_d
 }
 echo "PASS: XML/XSD valid; technical fields and access point selector absent; remaining business fields keep scope inheritance.\n";
 
-$options = $om->get(Hachitechs\Hideguard\Model\Config\Source\Environment::class)->toOptionArray();
-checkPhaseTwo(array_column($options, 'value') === ['development', 'production'], 'Admin must offer two modes');
-checkPhaseTwo(!isset($fields['staging']), 'Legacy staging group must be absent');
-$description = (string)($fields['environment']['comment'] ?? '');
-checkPhaseTwo(str_contains($description, 'https://dev.hideguard.io') && str_contains($description, 'https://hideguard.io'),
-    'Admin must explain both fixed endpoints');
-foreach (['development', 'production'] as $mode) {
-    $group = $fields[$mode]['children'] ?? [];
-    checkPhaseTwo(array_keys($group) === ['public_key', 'api_key', 'signature_public_key'], 'Unexpected key controls');
-    foreach ($group as $field) {
-        foreach (['showInDefault', 'showInWebsite', 'showInStore'] as $flag) {
-            checkPhaseTwo((int)($field[$flag] ?? 0) === 1, 'Key inheritance lost');
-        }
-    }
+foreach (['public_key', 'api_key', 'signature_public_key'] as $field) {
+    checkPhaseTwo(($fields[$field]['config_path'] ?? null) === Config::SECTION . '/production/' . $field,
+        'Credential storage path changed: ' . $field);
+}
+checkPhaseTwo(str_contains((string)$fields['api_key']['comment'], 'https://hideguard.io/dashboard/'),
+    'API key dashboard link is missing');
+foreach (['development', 'staging', 'production'] as $mode) {
     $scopeFixture = new class ($mode) implements Magento\Framework\App\Config\ScopeConfigInterface {
         public function __construct(private readonly string $mode) {}
         public function getValue($path, $scopeType = self::SCOPE_TYPE_DEFAULT, $scopeCode = null) {
-            checkPhaseTwo(!str_ends_with($path, '/endpoint_url') && !str_ends_with($path, '/protected_points'),
+            checkPhaseTwo(!str_ends_with($path, '/endpoint_url') && !str_ends_with($path, '/protected_points')
+                && !str_ends_with($path, '/environment'),
                 'Legacy UI configuration was read');
             return match ($path) {
                 Config::SECTION . '/general/enabled' => '1',
                 Config::SECTION . '/general/environment' => $this->mode,
-                Config::SECTION . '/' . $this->mode . '/public_key' => 'fixture-public',
-                Config::SECTION . '/' . $this->mode . '/signature_public_key' => 'fixture-signature',
+                Config::SECTION . '/production/public_key' => 'fixture-public',
+                Config::SECTION . '/production/signature_public_key' => 'fixture-signature',
                 default => null,
             };
         }
@@ -113,7 +107,7 @@ foreach (['development', 'production'] as $mode) {
         }
     };
     $candidate = new Config($scopeFixture, $om->get(Magento\Framework\Encryption\EncryptorInterface::class), $runtime);
-    $expected = $mode === 'production' ? 'https://hideguard.io' : 'https://dev.hideguard.io';
+    $expected = 'https://hideguard.io';
     checkPhaseTwo($candidate->policy($store)->endpointUrl === $expected, 'Policy mode endpoint mismatch');
     $candidateRules = $om->create(Hachitechs\Hideguard\Model\PageRules::class, ['config' => $candidate]);
     checkPhaseTwo($candidateRules->protects('/some/custom/form', $store), 'All-page protection must be fixed');
@@ -133,7 +127,7 @@ foreach (['development', 'production'] as $mode) {
         checkPhaseTwo($directive->getHostSources() === [$expected], 'CSP host differs from policy/browser');
     }
 }
-echo "PASS: two Admin modes, fixed host descriptions, three inherited keys per mode; policy/browser/CSP agree.\n";
+echo "PASS: flat inherited credentials and dashboard link; policy/browser/CSP use the live host regardless of legacy mode.\n";
 
 $guardResource = $om->get('HachitechsHideguardResource')->getConnection()->getConnection();
 $circuitResource = $om->get('HachitechsHideguardCircuitResource')->getConnection()->getConnection();

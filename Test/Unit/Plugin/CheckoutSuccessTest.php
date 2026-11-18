@@ -43,8 +43,8 @@ class CheckoutSuccessTest extends TestCase
         $config = $this->createStub(Config::class);
         $config->method('settings')->willReturn([
             'enabled' => true, 'points' => ['all_pages', 'complete_order'], 'pageRules' => [],
-            'environment' => 'development', 'passDuration' => 0,
-            'keys' => ['development' => ['publicKey' => 'public-test-key']],
+            'environment' => 'production', 'passDuration' => 0,
+            'keys' => ['production' => ['publicKey' => 'public-test-key']],
         ]);
         return $config;
     }

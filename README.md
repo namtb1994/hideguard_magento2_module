@@ -15,7 +15,7 @@ accounts and supported form submissions for both guests and logged-in customers.
   along with supported storefront form submissions.
 - **REST and GraphQL enforcement:** apply checks to supported Magento cart, order
   and account services used by API integrations.
-- **Store-scoped controls:** manage Testing and Production credentials,
+- **Store-scoped controls:** manage API credentials,
   verification intervals and timed blocks through Magento Admin.
 
 ## How HideGuard protection works
@@ -39,7 +39,7 @@ settlement and payment webhook processing are outside the module's scope.
 | PHP | `^8.2`, using a version supported by your Magento release. |
 | PHP extensions | cURL, PDO, PDO MySQL and Sodium. |
 | HideGuard library | `hachitechs/hideguard-php:^1.0`. |
-| HideGuard credentials | Public Key, API Key and Signature Public Key for the selected environment. |
+| HideGuard credentials | Public Key, API Key and Signature Public Key for your site. |
 | Connectivity | Server and storefront browser access to HideGuard over HTTPS. |
 | Maintenance | Magento cron configured and running. |
 
@@ -125,15 +125,15 @@ in developer or default mode requires Magento's `-f` option.
 ## Configure HideGuard in Magento Admin
 
 Open **Stores > Configuration > Hachitechs > HideGuard > Protection**.
-Select the store scope and environment, enter the matching credentials, then enable
-protection and save the configuration. Refresh the Magento configuration cache.
+Select the store scope, enter your credentials from the
+[HideGuard Dashboard](https://hideguard.io/dashboard/), then enable protection and
+save the configuration. Refresh the Magento configuration cache.
 
 | Setting | Purpose |
 | --- | --- |
 | Enable | Activate protection for the selected scope. |
-| Environment | Select Testing or Production with its own credentials. |
 | Public Key | Site key used by the browser SDK. |
-| API Key | Encrypted server-only credential for private verdict requests. |
+| API Key | Encrypted server-only credential from the [HideGuard Dashboard](https://hideguard.io/dashboard/) for private verdict requests. |
 | Signature Public Key | Site-specific Ed25519 PEM public key for signature verification. |
 | HideGuard Recheck Interval | Control when storefront verification is repeated. |
 | Block Duration | Set the duration of confirmed visitor blocks. |

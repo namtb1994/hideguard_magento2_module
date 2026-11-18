@@ -6,7 +6,6 @@ namespace Hachitechs\Hideguard\Plugin;
 
 use Hachitechs\HideguardPhp\Exceptions\GuardException;
 use Hachitechs\Hideguard\Model\Config;
-use Hachitechs\HideguardPhp\Configuration\ProtectionPolicy;
 use Hachitechs\HideguardPhp\Verification\Ed25519Verifier;
 use Magento\Config\Model\Config as SystemConfig;
 use Magento\Framework\Exception\LocalizedException;
@@ -50,7 +49,7 @@ class ValidateSettings
         }
         $groups = (array)$subject->getData('groups');
         $fields = [
-            'enabled' => 'enabled', 'environment' => 'environment',
+            'enabled' => 'enabled',
             'protected_paths' => 'pageRules', 'block_duration' => 'blockDuration', 'pass_duration' => 'passDuration',
         ];
         foreach ($fields as $field => $name) {
@@ -75,23 +74,17 @@ class ValidateSettings
             'public_key' => 'publicKey',
             'signature_public_key' => 'signaturePublicKey',
         ];
-        foreach (ProtectionPolicy::ENVIRONMENTS as $environment) {
-            foreach ($profileFields as $field => $name) {
-                $posted = $groups['general']['groups'][$environment]['fields'][$field] ?? null;
-                if ($posted !== null) {
-                    $settings['keys'][$environment][$name] = !empty($posted['inherit'])
-                        ? $parent['keys'][$environment][$name] : trim((string)($posted['value'] ?? ''));
-                }
+        foreach ($profileFields as $field => $name) {
+            $posted = $groups['general']['fields'][$field] ?? null;
+            if ($posted !== null) {
+                $settings['keys'][Config::ENVIRONMENT][$name] = !empty($posted['inherit'])
+                    ? $parent['keys'][Config::ENVIRONMENT][$name] : trim((string)($posted['value'] ?? ''));
             }
         }
         try {
             $policy = $this->config->toPolicy($settings);
             if ($policy->enabled) {
                 Ed25519Verifier::validatePublicKey($policy->signaturePublicKey);
-            }
-            // Validate dormant profiles too, without requiring keys while they are inactive.
-            foreach (ProtectionPolicy::ENVIRONMENTS as $environment) {
-                $this->config->toPolicy(array_replace($settings, ['enabled' => false, 'environment' => $environment]));
             }
         } catch (GuardException $error) {
             throw new LocalizedException(__($error->getMessage()));
